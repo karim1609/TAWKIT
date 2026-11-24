@@ -17,7 +17,7 @@ A free, offline-first **prayer times display app for mosques and homes**, built 
 | **Next prayer** | Large countdown (HH:MM:SS) + progress ring; next prayer highlighted in green; past prayers shown in a softer color |
 | **Clock & dates** | Big digital clock (12/24h, seconds on/off), Hijri + Gregorian dates, Hijri day offset (±3), Ramadan countdown, Monday/Thursday fasting reminders |
 | **Hijri events** | Ramadan, Eid al-Fitr, Eid al-Adha, Arafah, Ashura, Mawlid & Islamic New Year auto-detected and announced in the ticker (≤30 days ahead) |
-| **Adhan & alerts** | Plays bundled WAV files (adhan, Fajr adhan, iqama, alert) — or synthesized chimes if files are missing, so sound always works; **custom adhan WAV per prayer** selectable in Settings; volume control; pre-Fajr alert |
+| **Adhan & alerts** | Plays bundled WAV/MP3 files (adhan, iqama, alert) — or synthesized chimes if files are missing, so sound always works; **230+ named adhan recordings** (Makkah, Madinah, Al-Aqsa, Cairo, Istanbul, Morocco and many more) in a searchable Settings list, plus **custom WAV/MP3 per prayer**; volume control; pre-Fajr alert |
 | **Reminders** | Tawkit keyword syntax: `15.BEFORE.FAJR.(message)`, `10.AFTER.MAGHRIB.(msg)`, `NISF.(msg)` (midnight), `TULT.(msg)` (last third of night). 12-second on-screen message + beep |
 | **Content** | Rotating Qur'an verses, hadith and adhkar (Arabic + translation + reference); azkar shown after each prayer; **verse-of-the-day corner widget** (changes once per day) |
 | **Slides** | Your own slides (text with `\|` line breaks, `.jpg/.png` files, URLs) shown between prayers — folder: `~/.tawkit/slides/` |
@@ -60,19 +60,31 @@ Requires **Java 21+** (tested with Maven 3.9).
 - Click the **next-prayer ring** to enlarge it
 - Click the **ticker** to pause/resume scrolling
 
-## Put your own adhan sounds (optional)
+## Adhan sounds (optional)
 
-16-bit PCM WAV files in `src/main/resources/assets/audio/`:
+Open **Settings → Audio** and pick a recording by name from *Adhan recitation*
+(230+ recordings from Makkah, Madinah, Al-Aqsa, Cairo, Istanbul, Morocco and
+many more) — it applies to every prayer. Type in *Find adhan* to narrow the
+list. You can also choose a different WAV/MP3 file per prayer; the selected
+recording is used when no per-prayer file is set.
+
+Bundled audio files live in `src/main/resources/assets/audio/`:
 
 ```
-assets/audio/adhan/adhan.wav         full adhan
-assets/audio/adhan/adhan_fajr.wav    Fajr adhan (optional)
-assets/audio/adhan/short_adhan.wav   short adhan (optional)
-assets/audio/iqama/short_iqama.wav   iqama call
-assets/audio/alerts/alert.wav        alert sound
+assets/audio/adhan/adhan.wav              default adhan
+assets/audio/adhan/catalog.txt            list shown in Settings
+assets/audio/adhan/curated/*.mp3          featured recordings
+assets/audio/adhan/library/*.mp3          the full collection
+assets/audio/adhan/adhan_fajr.wav         Fajr adhan (optional)
+assets/audio/adhan/short_adhan.wav        short adhan (optional)
+assets/audio/iqama/short_iqama.wav        iqama call
+assets/audio/alerts/alert.wav             alert sound
 ```
 
 If a file is missing, a synthesized chime plays instead — sound always works.
+The recordings come from the
+[Kiwifu/adhan-mp3](https://github.com/Kiwifu/adhan-mp3) collection; see
+`assets/audio/adhan/README.txt` for details.
 
 ## Add your own slides
 

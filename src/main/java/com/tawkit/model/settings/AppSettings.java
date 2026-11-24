@@ -40,8 +40,11 @@ public class AppSettings {
     private boolean preFajrAlertEnabled = true;
     private int preFajrAlertMinutes = 10;
 
-    /** Custom adhan WAV file per prayer (empty = bundled default). Change #6. */
+    /** Custom adhan file per prayer (empty = bundled default). Change #6. */
     private final java.util.Map<PrayerType, String> adhanSoundFiles = new java.util.EnumMap<>(PrayerType.class);
+
+    /** Id of the bundled recording chosen by name ("" = original bundled adhan). */
+    private String adhanSoundId = "";
 
     // ---- Jumu'a (Friday) mode — change #5 ----
     private boolean jumuaEnabled = true;
@@ -266,7 +269,16 @@ public class AppSettings {
 
     // ------------------------------------------------------------ audio files (#6)
 
-    /** Custom adhan WAV path for the prayer, or "" when using the bundled one. */
+    /** Selected bundled adhan id; "" means the original bundled recording. */
+    public String getAdhanSoundId() {
+        return adhanSoundId;
+    }
+
+    public void setAdhanSoundId(String adhanSoundId) {
+        this.adhanSoundId = adhanSoundId == null ? "" : adhanSoundId.trim();
+    }
+
+    /** Custom adhan file path for the prayer, or "" when using the bundled one. */
     public String getAdhanSoundFile(PrayerType type) {
         return adhanSoundFiles.getOrDefault(type, "");
     }

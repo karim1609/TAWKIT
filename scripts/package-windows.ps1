@@ -24,13 +24,28 @@ if ($LASTEXITCODE -ne 0) { throw "Maven build failed" }
 $jar = "target/tawkit-desktop-$AppVersion-SNAPSHOT.jar"
 if (-not (Test-Path $jar)) { throw "Jar not found: $jar" }
 
+# jpackage copies every file from --input into the app folder, so stage only
+# what the app needs: the jar plus the small MP3 decoder library. Hard links
+# avoid duplicating the (large) jar on disk.
+$stage = "target/package-input"
+if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+New-Item -ItemType Directory -Path $stage | Out-Null
+New-Item -ItemType HardLink -Path (Join-Path $stage (Split-Path $jar -Leaf)) `
+    -Target (Resolve-Path $jar)
+if (Test-Path "target/lib") {
+    New-Item -ItemType Directory -Path (Join-Path $stage "lib") | Out-Null
+    Get-ChildItem "target/lib" -File | ForEach-Object {
+        New-Item -ItemType HardLink -Path (Join-Path $stage "lib" $_.Name) -Target $_.FullName
+    }
+}
+
 Write-Host "==> Creating $Type installer with jpackage..." -ForegroundColor Cyan
-# The project is pure Java (zero dependencies), so one jar + bundled JRE is enough
+# App jar + its lib/ folder + bundled JRE
 jpackage `
     --type $Type `
     --name $AppName `
     --app-version $AppVersion `
-    --input target `
+    --input $stage `
     --main-jar $jar.Split('/')[-1] `
     --icon src/main/resources/assets/icon.png `
     --dest installer `

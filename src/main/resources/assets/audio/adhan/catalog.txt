@@ -1,0 +1,233 @@
+# Bundled adhan recordings (id|display name|classpath resource)
+# Source: https://github.com/Kiwifu/adhan-mp3
+abd_alrazaq_saleh_lebanon|Abd Alrazaq Saleh — Lebanon|/assets/audio/adhan/library/abd_alrazaq_saleh_lebanon.mp3
+abdel_moneim_abdel_mobdi|Abdel Moneim Abdel Mobdi|/assets/audio/adhan/library/abdel_moneim_abdel_mobdi.mp3
+abdu_al_karem_jabare|Abdu Al Karem Jabare|/assets/audio/adhan/library/abdu_al_karem_jabare.mp3
+abdul_majid_al_surehi_1|Abdul Majid Al Surehi 1|/assets/audio/adhan/library/abdul_majid_al_surehi_1.mp3
+abdul_majid_al_surehi_2|Abdul Majid Al Surehi 2|/assets/audio/adhan/library/abdul_majid_al_surehi_2.mp3
+abdul_majid_al_surehi_3|Abdul Majid Al Surehi 3|/assets/audio/adhan/library/abdul_majid_al_surehi_3.mp3
+abdul_rahman_al_arake_1|Abdul Rahman Al Arake 1|/assets/audio/adhan/library/abdul_rahman_al_arake_1.mp3
+abdul_rahman_al_arake_2|Abdul Rahman Al Arake 2|/assets/audio/adhan/library/abdul_rahman_al_arake_2.mp3
+abdul_rahman_al_arake_3|Abdul Rahman Al Arake 3|/assets/audio/adhan/library/abdul_rahman_al_arake_3.mp3
+abdul_rahman_kassab_1|Abdul Rahman Kassab 1|/assets/audio/adhan/library/abdul_rahman_kassab_1.mp3
+abdul_rahman_kassab_2|Abdul Rahman Kassab 2|/assets/audio/adhan/library/abdul_rahman_kassab_2.mp3
+abdul_rahman_majde|Abdul Rahman Majde|/assets/audio/adhan/library/abdul_rahman_majde.mp3
+abdul_wali_al_arkani|Abdul Wali Al Arkani|/assets/audio/adhan/library/abdul_wali_al_arkani.mp3
+abdulah_al_dahbe_egypt|Abdulah Al Dahbe — Egypt|/assets/audio/adhan/library/abdulah_al_dahbe_egypt.mp3
+abdulah_al_maknawe|Abdulah Al Maknawe|/assets/audio/adhan/library/abdulah_al_maknawe.mp3
+abdulah_al_sabaawe|Abdulah Al Sabaawe|/assets/audio/adhan/library/abdulah_al_sabaawe.mp3
+abdulbasit_abdusamad_1_egypt|Abdulbasit Abdusamad 1 — Egypt|/assets/audio/adhan/library/abdulbasit_abdusamad_1_egypt.mp3
+abdulbasit_abdusamad_2_egypt|Abdulbasit Abdusamad 2 — Egypt|/assets/audio/adhan/library/abdulbasit_abdusamad_2_egypt.mp3
+abdulbasit_abdusamad_3_egypt|Abdulbasit Abdusamad 3 — Egypt|/assets/audio/adhan/library/abdulbasit_abdusamad_3_egypt.mp3
+abdulbasit_abdusamad_4_egypt|Abdulbasit Abdusamad 4 — Egypt|/assets/audio/adhan/library/abdulbasit_abdusamad_4_egypt.mp3
+abdulbasit_abdusamad_5_cairo|Abdulbasit Abdusamad 5 — Cairo|/assets/audio/adhan/library/abdulbasit_abdusamad_5_cairo.mp3
+abdulbasit_abdusamad_6_fajr_egypt|Abdulbasit Abdusamad 6 — Fajr Egypt|/assets/audio/adhan/library/abdulbasit_abdusamad_6_fajr_egypt.mp3
+abdulbasit_abdusamad_7_fajr_egypt|Abdulbasit Abdusamad 7 — Fajr Egypt|/assets/audio/adhan/library/abdulbasit_abdusamad_7_fajr_egypt.mp3
+abul_ainain_shuaisha_cairo|Abul Ainain Shuaisha — Cairo|/assets/audio/adhan/library/abul_ainain_shuaisha_cairo.mp3
+aby_yasser_al_jazaire|Aby Yasser Al Jazaire|/assets/audio/adhan/library/aby_yasser_al_jazaire.mp3
+adal_malek_abdulah_al_massre|Adal Malek Abdulah Al Massre|/assets/audio/adhan/library/adal_malek_abdulah_al_massre.mp3
+adam_abu_sakhra|Adam Abu Sakhra|/assets/audio/adhan/library/adam_abu_sakhra.mp3
+adham_al_sharqawe|Adham Al Sharqawe|/assets/audio/adhan/library/adham_al_sharqawe.mp3
+adhan_ajman_uae|Adhan Ajman UAE|/assets/audio/adhan/library/adhan_ajman_uae.mp3
+aqsa_jerusalem|Jerusalem — Al-Aqsa Mosque|/assets/audio/adhan/curated/aqsa_jerusalem.mp3
+madinah_haram_al_madani_1|Madinah — Al-Haram Al-Madani (1)|/assets/audio/adhan/curated/madinah_haram_al_madani_1.mp3
+madinah_haram_al_madani_2|Madinah — Al-Haram Al-Madani (2)|/assets/audio/adhan/curated/madinah_haram_al_madani_2.mp3
+adhan_brunei_1|Adhan Brunei 1|/assets/audio/adhan/library/adhan_brunei_1.mp3
+adhan_brunei_2|Adhan Brunei 2|/assets/audio/adhan/library/adhan_brunei_2.mp3
+adhan_brunei_3|Adhan Brunei 3|/assets/audio/adhan/library/adhan_brunei_3.mp3
+dubai_uae|Dubai, UAE|/assets/audio/adhan/curated/dubai_uae.mp3
+fajr_madinah|Fajr — Madinah (Al-Haram Al-Madani)|/assets/audio/adhan/curated/fajr_madinah.mp3
+fajr_makkah|Fajr — Makkah (Al-Haram Al-Makki)|/assets/audio/adhan/curated/fajr_makkah.mp3
+fajr_algeria|Fajr — Algeria|/assets/audio/adhan/curated/fajr_algeria.mp3
+fajr_cairo|Fajr — Cairo, Egypt|/assets/audio/adhan/curated/fajr_cairo.mp3
+adhan_fajr_kuwait_1|Adhan Fajr Kuwait 1|/assets/audio/adhan/library/adhan_fajr_kuwait_1.mp3
+adhan_fajr_kuwait_2|Adhan Fajr Kuwait 2|/assets/audio/adhan/library/adhan_fajr_kuwait_2.mp3
+adhan_fajr_umm_al_quwain|Adhan Fajr Umm Al Quwain|/assets/audio/adhan/library/adhan_fajr_umm_al_quwain.mp3
+adhan_georgia|Adhan Georgia|/assets/audio/adhan/library/adhan_georgia.mp3
+adhan_india|Adhan India|/assets/audio/adhan/library/adhan_india.mp3
+adhan_indonesia|Adhan Indonesia|/assets/audio/adhan/library/adhan_indonesia.mp3
+adhan_kenya|Adhan Kenya|/assets/audio/adhan/library/adhan_kenya.mp3
+adhan_kuwait|Adhan Kuwait|/assets/audio/adhan/library/adhan_kuwait.mp3
+adhan_malaysia_1|Adhan Malaysia 1|/assets/audio/adhan/library/adhan_malaysia_1.mp3
+adhan_malaysia_2|Adhan Malaysia 2|/assets/audio/adhan/library/adhan_malaysia_2.mp3
+adhan_maldives|Adhan Maldives|/assets/audio/adhan/library/adhan_maldives.mp3
+adhan_masjid_al_rajehe_saudi_arabia_1|Adhan Masjid Al Rajehe Saudi Arabia 1|/assets/audio/adhan/library/adhan_masjid_al_rajehe_saudi_arabia_1.mp3
+adhan_masjid_al_rajehe_saudi_arabia_2|Adhan Masjid Al Rajehe Saudi Arabia 2|/assets/audio/adhan/library/adhan_masjid_al_rajehe_saudi_arabia_2.mp3
+adhan_masjid_al_rajehe_saudi_arabia_3|Adhan Masjid Al Rajehe Saudi Arabia 3|/assets/audio/adhan/library/adhan_masjid_al_rajehe_saudi_arabia_3.mp3
+muscat_oman|Muscat, Oman|/assets/audio/adhan/curated/muscat_oman.mp3
+adhan_pakistan|Adhan Pakistan|/assets/audio/adhan/library/adhan_pakistan.mp3
+adhan_riyadh_saudi_arabia|Adhan Riyadh Saudi Arabia|/assets/audio/adhan/library/adhan_riyadh_saudi_arabia.mp3
+adhan_syria|Adhan Syria|/assets/audio/adhan/library/adhan_syria.mp3
+tunisia|Tunisia|/assets/audio/adhan/curated/tunisia.mp3
+turkey_1|Istanbul, Turkey|/assets/audio/adhan/curated/turkey_1.mp3
+adhan_turkey_2|Adhan Turkey 2|/assets/audio/adhan/library/adhan_turkey_2.mp3
+ahmad_aamer_muhammad|Ahmad Aamer Muhammad|/assets/audio/adhan/library/ahmad_aamer_muhammad.mp3
+ahmad_al_aane|Ahmad Al Aane|/assets/audio/adhan/library/ahmad_al_aane.mp3
+ahmad_al_amade_1_qatar|Ahmad Al Amade 1 — Qatar|/assets/audio/adhan/library/ahmad_al_amade_1_qatar.mp3
+ahmad_al_amade_2_qatar|Ahmad Al Amade 2 — Qatar|/assets/audio/adhan/library/ahmad_al_amade_2_qatar.mp3
+ahmad_al_batal|Ahmad Al Batal|/assets/audio/adhan/library/ahmad_al_batal.mp3
+ahmad_al_harasses|Ahmad Al Harasses|/assets/audio/adhan/library/ahmad_al_harasses.mp3
+ahmad_al_nafees|Ahmad Al Nafees|/assets/audio/adhan/library/ahmad_al_nafees.mp3
+ahmad_ali_1|Ahmad Ali 1|/assets/audio/adhan/library/ahmad_ali_1.mp3
+ahmad_ali_2_egypt|Ahmad Ali 2 — Egypt|/assets/audio/adhan/library/ahmad_ali_2_egypt.mp3
+ahmad_ali_murtada|Ahmad Ali Murtada|/assets/audio/adhan/library/ahmad_ali_murtada.mp3
+ahmad_fakhru_qatar|Ahmad Fakhru — Qatar|/assets/audio/adhan/library/ahmad_fakhru_qatar.mp3
+ahmad_nawaf_al_mejlad_1|Ahmad Nawaf Al Mejlad 1|/assets/audio/adhan/library/ahmad_nawaf_al_mejlad_1.mp3
+ahmad_nawaf_al_mejlad_2_fajr|Ahmad Nawaf Al Mejlad 2 — Fajr|/assets/audio/adhan/library/ahmad_nawaf_al_mejlad_2_fajr.mp3
+ahmd_at_trablsy_fajr_kuwait|Ahmd At-Trablsy — Fajr Kuwait|/assets/audio/adhan/library/ahmd_at_trablsy_fajr_kuwait.mp3
+ahmd_at_trablsy_1|Ahmd At-Trablsy 1|/assets/audio/adhan/library/ahmd_at_trablsy_1.mp3
+ahmd_at_trablsy_2|Ahmd At-Trablsy 2|/assets/audio/adhan/library/ahmd_at_trablsy_2.mp3
+ahmd_at_trablsy_3|Ahmd At-Trablsy 3|/assets/audio/adhan/library/ahmd_at_trablsy_3.mp3
+ahmd_at_trablsy_4|Ahmd At-Trablsy 4|/assets/audio/adhan/library/ahmd_at_trablsy_4.mp3
+ahmd_at_trablsy_5|Ahmd At-Trablsy 5|/assets/audio/adhan/library/ahmd_at_trablsy_fajr_kuwait.mp3
+ahmed_al_haddad|Ahmed Al-Haddad|/assets/audio/adhan/library/ahmed_al_haddad.mp3
+ahmed_el_kourdi|Ahmed El Kourdi|/assets/audio/adhan/library/ahmed_el_kourdi.mp3
+ahmed_nuinaa_1_egypt|Ahmed Nuinaa 1 — Egypt|/assets/audio/adhan/library/ahmed_nuinaa_1_egypt.mp3
+ahmed_nuinaa_2_cairo|Ahmed Nuinaa 2 — Cairo|/assets/audio/adhan/library/ahmed_nuinaa_2_cairo.mp3
+akhdam_bnu_al_madane|Akhdam Bnu Al Madane|/assets/audio/adhan/library/akhdam_bnu_al_madane.mp3
+al_ameen_muhammad_qanyouh|Al Ameen Muhammad Qanyouh|/assets/audio/adhan/library/al_ameen_muhammad_qanyouh.mp3
+al_bahlul_abu_arqub_1|Al Bahlul Abu Arqub 1|/assets/audio/adhan/library/al_bahlul_abu_arqub_1.mp3
+al_bahlul_abu_arqub_2|Al Bahlul Abu Arqub 2|/assets/audio/adhan/library/al_bahlul_abu_arqub_2.mp3
+al_duqale_muhammad_al_alam|Al Duqale Muhammad Al Alam|/assets/audio/adhan/library/al_duqale_muhammad_al_alam.mp3
+al_saed_metwale_al_aal|Al Saed Metwale AL Aal|/assets/audio/adhan/library/al_saed_metwale_al_aal.mp3
+al_sayed_muslim|Al Sayed Muslim|/assets/audio/adhan/library/al_sayed_muslim.mp3
+ali_hassan_abd_al_khaliq_qatar|Ali Hassan Abd Al Khaliq — Qatar|/assets/audio/adhan/library/ali_hassan_abd_al_khaliq_qatar.mp3
+ali_ibn_ahmad_mala_hq|Ali Ibn Ahmad Mala — HQ|/assets/audio/adhan/library/ali_ibn_ahmad_mala_hq.mp3
+makkah_haram_al_maki|Makkah — Al-Haram Al-Makki|/assets/audio/adhan/curated/makkah_haram_al_maki.mp3
+ali_ibn_ahmad_mala_2_al_haram_al_maki|Ali Ibn Ahmad Mala 2 — Al Haram Al Maki|/assets/audio/adhan/library/ali_ibn_ahmad_mala_2_al_haram_al_maki.mp3
+ali_ibn_ahmad_mala_3_al_haram_al_maki|Ali Ibn Ahmad Mala 3 — Al Haram Al Maki|/assets/audio/adhan/library/ali_ibn_ahmad_mala_3_al_haram_al_maki.mp3
+ali_ibn_ahmad_mala_4_al_haram_al_maki|Ali Ibn Ahmad Mala 4 — Al Haram Al Maki|/assets/audio/adhan/library/ali_ibn_ahmad_mala_4_al_haram_al_maki.mp3
+ali_ibn_ahmad_mala_5_al_haram_al_maki|Ali Ibn Ahmad Mala 5 — Al Haram Al Maki|/assets/audio/adhan/library/ali_ibn_ahmad_mala_5_al_haram_al_maki.mp3
+ali_ibn_ahmad_mala_6_al_haram_al_maki|Ali Ibn Ahmad Mala 6 — Al Haram Al Maki|/assets/audio/adhan/library/ali_ibn_ahmad_mala_6_al_haram_al_maki.mp3
+ali_ibn_ahmad_mala_hq_2|Ali Ibn Ahmad Mala HQ|/assets/audio/adhan/library/ali_ibn_ahmad_mala_hq_2.mp3
+anuar_duman_turkey|Anuar Duman — Turkey|/assets/audio/adhan/library/anuar_duman_turkey.mp3
+assem_bukhrare_al_haram_al_maki|Assem Bukhrare — Al Haram Al Maki|/assets/audio/adhan/library/assem_bukhrare_al_haram_al_maki.mp3
+azan_nakshabandi|Azan nakshabandi|/assets/audio/adhan/library/azan_nakshabandi.mp3
+badee_jadu_1|Badee Jadu 1|/assets/audio/adhan/library/badee_jadu_1.mp3
+badee_jadu_2|Badee Jadu 2|/assets/audio/adhan/library/badee_jadu_2.mp3
+badee_jadu_3|Badee Jadu 3|/assets/audio/adhan/library/badee_jadu_3.mp3
+balbasher_abdel_qadir|BalBaSher Abdel Qadir|/assets/audio/adhan/library/balbasher_abdel_qadir.mp3
+bnu_sawana_1|Bnu Sawana 1|/assets/audio/adhan/library/bnu_sawana_1.mp3
+bnu_sawana_2|Bnu Sawana 2|/assets/audio/adhan/library/bnu_sawana_2.mp3
+ezzedine_amarna|Ezzedine Amarna|/assets/audio/adhan/library/ezzedine_amarna.mp3
+fajr_adhan_by_nasreddine_toubar|Fajr Adhan by Nasreddine Toubar|/assets/audio/adhan/library/fajr_adhan_by_nasreddine_toubar.mp3
+fares_abdul_ghane|Fares Abdul Ghane|/assets/audio/adhan/library/fares_abdul_ghane.mp3
+faruq_abdul_rahman_hadrawe_al_haram_al_maki|Faruq Abdul Rahman Hadrawe — Al Haram Al Maki|/assets/audio/adhan/library/faruq_abdul_rahman_hadrawe_al_haram_al_maki.mp3
+fawaz_farhan_al_dumane|Fawaz Farhan Al Dumane|/assets/audio/adhan/library/fawaz_farhan_al_dumane.mp3
+fayz_abd_al_salam|Fayz Abd Al Salam|/assets/audio/adhan/library/fayz_abd_al_salam.mp3
+gharm_al_bishi|Gharm Al Bishi|/assets/audio/adhan/library/gharm_al_bishi.mp3
+ghazi_al_saadoun|Ghazi Al Saadoun|/assets/audio/adhan/library/ghazi_al_saadoun.mp3
+hafed_hessen_erq|Hafed Hessen Erq|/assets/audio/adhan/library/hafed_hessen_erq.mp3
+haj_sulaiman_mukhtar_algeria|Haj Sulaiman Mukhtar — Algeria|/assets/audio/adhan/library/haj_sulaiman_mukhtar_algeria.mp3
+hamad_al_daghriri|Hamad Al Daghriri|/assets/audio/adhan/library/hamad_al_daghriri.mp3
+hamad_al_daghriri_hq|Hamad Al Daghriri — HQ|/assets/audio/adhan/library/hamad_al_daghriri_hq.mp3
+hamdan_al_maleke_najran_saudi_arabia|Hamdan Al Maleke — Najran Saudi Arabia|/assets/audio/adhan/library/hamdan_al_maleke_najran_saudi_arabia.mp3
+hamza_al_halabea|Hamza Al Halabea|/assets/audio/adhan/library/hamza_al_halabea.mp3
+hamza_al_majale|Hamza Al Majale|/assets/audio/adhan/library/hamza_al_majale.mp3
+hassan_khalfan_qatar|Hassan Khalfan — Qatar|/assets/audio/adhan/library/hassan_khalfan_qatar.mp3
+hassan_mahmud_bare|Hassan Mahmud Bare|/assets/audio/adhan/library/hassan_mahmud_bare.mp3
+hassan_salah_baalul|Hassan Salah Baalul|/assets/audio/adhan/library/hassan_salah_baalul.mp3
+hecham_khalel|Hecham Khalel|/assets/audio/adhan/library/hecham_khalel.mp3
+hussain_afifi|Hussain Afifi|/assets/audio/adhan/library/hussain_afifi.mp3
+hussam_al_deen_obade|Hussam Al Deen Obade|/assets/audio/adhan/library/hussam_al_deen_obade.mp3
+ibraheem_al_jumayle|Ibraheem Al Jumayle|/assets/audio/adhan/library/ibraheem_al_jumayle.mp3
+ibraheem_jabar_1|Ibraheem Jabar 1|/assets/audio/adhan/library/ibraheem_jabar_1.mp3
+ibraheem_jabar_2|Ibraheem Jabar 2|/assets/audio/adhan/library/ibraheem_jabar_2.mp3
+ibraheem_jabr_abu_raheq|Ibraheem Jabr Abu Raheq|/assets/audio/adhan/library/ibraheem_jabr_abu_raheq.mp3
+ibraheem_jabr_abu_raheq_fajr|Ibraheem Jabr Abu Raheq — Fajr|/assets/audio/adhan/library/ibraheem_jabr_abu_raheq_fajr.mp3
+ihssan_hamed_al_dulayme|Ihssan Hamed Al Dulayme|/assets/audio/adhan/library/ihssan_hamed_al_dulayme.mp3
+islam_yassen|Islam Yassen|/assets/audio/adhan/library/islam_yassen.mp3
+ismail_al_sheikh|Ismail Al Sheikh|/assets/audio/adhan/library/ismail_al_sheikh.mp3
+issa_al_hajlawe|Issa Al Hajlawe|/assets/audio/adhan/library/issa_al_hajlawe.mp3
+jamal_abu_al_hamed_al_jaafare|Jamal Abu Al Hamed Al Jaafare|/assets/audio/adhan/library/jamal_abu_al_hamed_al_jaafare.mp3
+kamal_muhammad_al_marush_1|Kamal Muhammad Al Marush 1|/assets/audio/adhan/library/kamal_muhammad_al_marush_1.mp3
+kamal_muhammad_al_marush_2_morocco|Kamal Muhammad Al Marush 2 — Morocco|/assets/audio/adhan/library/kamal_muhammad_al_marush_2_morocco.mp3
+lafi_al_awni|Lafi Al Awni|/assets/audio/adhan/library/lafi_al_awni.mp3
+mahde_al_bechee|Mahde Al Bechee|/assets/audio/adhan/library/mahde_al_bechee.mp3
+mahmoud_al_fawazi|Mahmoud Al Fawazi|/assets/audio/adhan/library/mahmoud_al_fawazi.mp3
+mahmoud_ali_al_banna_cairo|Mahmoud Ali Al Banna — Cairo|/assets/audio/adhan/library/mahmoud_ali_al_banna_cairo.mp3
+mahmoud_hijazi|Mahmoud Hijazi|/assets/audio/adhan/library/mahmoud_hijazi.mp3
+mahmoud_khalil_al_hussary_cairo|Mahmoud Khalil Al Hussary — Cairo|/assets/audio/adhan/library/mahmoud_khalil_al_hussary_cairo.mp3
+mahmud_al_tawakh_1|Mahmud Al Tawakh 1|/assets/audio/adhan/library/mahmud_al_tawakh_1.mp3
+mahmud_al_tawakh_2_masjid_al_rifai_cairo|Mahmud Al Tawakh 2 — Masjid Al Rifai Cairo|/assets/audio/adhan/library/mahmud_al_tawakh_2_masjid_al_rifai_cairo.mp3
+mahmud_mustafa_al_najar|Mahmud Mustafa Al Najar|/assets/audio/adhan/library/mahmud_mustafa_al_najar.mp3
+majid_al_zamel|Majid Al Zamel|/assets/audio/adhan/library/majid_al_zamel.mp3
+mansur_al_zahrane|Mansur Al Zahrane|/assets/audio/adhan/library/mansur_al_zahrane.mp3
+mansur_al_zahrane_hq|Mansur Al Zahrane — HQ|/assets/audio/adhan/library/mansur_al_zahrane_hq.mp3
+mishary_al_afasy_hq|Mishary Al Afasy — HQ|/assets/audio/adhan/library/mishary_al_afasy_hq.mp3
+mishary_rashid_alafasy_1_kuwait|Mishary Rashid Alafasy 1 — Kuwait|/assets/audio/adhan/library/mishary_rashid_alafasy_1_kuwait.mp3
+mishary_rashid_alafasy_2_kuwait|Mishary Rashid Alafasy 2 — Kuwait|/assets/audio/adhan/library/mishary_rashid_alafasy_2_kuwait.mp3
+mishary_rashid_alafasy_3_fajr_kuwait|Mishary Rashid Alafasy 3 — Fajr Kuwait|/assets/audio/adhan/library/mishary_rashid_alafasy_3_fajr_kuwait.mp3
+mishary_rashid_alafasy_4_fajr_kuwait|Mishary Rashid Alafasy 4 — Fajr Kuwait|/assets/audio/adhan/library/mishary_rashid_alafasy_4_fajr_kuwait.mp3
+mohamed_siddiq_el_minshawi_afghanistan|Mohamed Siddiq El-Minshawi — Afghanistan|/assets/audio/adhan/library/mohamed_siddiq_el_minshawi_afghanistan.mp3
+mohamed_siddiq_el_minshawi_egypt_1|Mohamed Siddiq El-Minshawi — Egypt 1|/assets/audio/adhan/library/mohamed_siddiq_el_minshawi_egypt_1.mp3
+mohamed_siddiq_el_minshawi_egypt_2|Mohamed Siddiq El-Minshawi — Egypt 2|/assets/audio/adhan/library/mohamed_siddiq_el_minshawi_egypt_2.mp3
+mohamed_tarek_reciting_azan|Mohamed Tarek Reciting Azan|/assets/audio/adhan/library/mohamed_tarek_reciting_azan.mp3
+mohammed_salahuddin_kabbara_1|Mohammed Salahuddin Kabbara 1|/assets/audio/adhan/library/mohammed_salahuddin_kabbara_1.mp3
+mohammed_salahuddin_kabbara_2|Mohammed Salahuddin Kabbara 2|/assets/audio/adhan/library/mohammed_salahuddin_kabbara_2.mp3
+muad_al_qaseme_qatar|Muad Al Qaseme — Qatar|/assets/audio/adhan/library/muad_al_qaseme_qatar.mp3
+muhammad_abd_al_hakem|Muhammad Abd Al Hakem|/assets/audio/adhan/library/muhammad_abd_al_hakem.mp3
+muhammad_abu_al_maqarem|Muhammad Abu Al Maqarem|/assets/audio/adhan/library/muhammad_abu_al_maqarem.mp3
+muhammad_adel|Muhammad Adel|/assets/audio/adhan/library/muhammad_adel.mp3
+muhammad_al_damradash|Muhammad Al Damradash|/assets/audio/adhan/library/muhammad_al_damradash.mp3
+muhammad_al_kurayne_al_maluke_1|Muhammad Al Kurayne Al Maluke 1|/assets/audio/adhan/library/muhammad_al_kurayne_al_maluke_1.mp3
+muhammad_al_kurayne_al_maluke_2|Muhammad Al Kurayne Al Maluke 2|/assets/audio/adhan/library/muhammad_al_kurayne_al_maluke_2.mp3
+muhammad_al_saed_maher|Muhammad Al Saed Maher|/assets/audio/adhan/library/muhammad_al_saed_maher.mp3
+muhammad_al_zahid|Muhammad Al Zahid|/assets/audio/adhan/library/muhammad_al_zahid.mp3
+muhammad_ashraf_aawad|Muhammad Ashraf Aawad|/assets/audio/adhan/library/muhammad_ashraf_aawad.mp3
+muhammad_ben_mussa|Muhammad Ben Mussa|/assets/audio/adhan/library/muhammad_ben_mussa.mp3
+muhammad_fathe_hantur|Muhammad Fathe Hantur|/assets/audio/adhan/library/muhammad_fathe_hantur.mp3
+muhammad_hamud|Muhammad Hamud|/assets/audio/adhan/library/muhammad_hamud.mp3
+muhammad_hamud_colombia|Muhammad Hamud — Colombia|/assets/audio/adhan/library/muhammad_hamud_colombia.mp3
+muhammad_hessen_al_shahawe|Muhammad Hessen Al Shahawe|/assets/audio/adhan/library/muhammad_hessen_al_shahawe.mp3
+muhammad_khaleel_raml_al_haram_al_maki|Muhammad Khaleel Raml — Al Haram Al Maki|/assets/audio/adhan/library/muhammad_khaleel_raml_al_haram_al_maki.mp3
+muhammad_najee_1|Muhammad Najee 1|/assets/audio/adhan/library/muhammad_najee_1.mp3
+muhammad_najee_2|Muhammad Najee 2|/assets/audio/adhan/library/muhammad_najee_2.mp3
+muhammad_najee_3|Muhammad Najee 3|/assets/audio/adhan/library/muhammad_najee_3.mp3
+muhammad_nasser_al_dine_al_albane_jordan|Muhammad Nasser Al Dine Al Albane — Jordan|/assets/audio/adhan/library/muhammad_nasser_al_dine_al_albane_jordan.mp3
+muhammad_ramadan_saad_al_haram_al_maki|Muhammad Ramadan Saad — Al Haram Al Maki|/assets/audio/adhan/library/muhammad_ramadan_saad_al_haram_al_maki.mp3
+muhammad_refaat_cairo|Muhammad Refaat — Cairo|/assets/audio/adhan/library/muhammad_refaat_cairo.mp3
+muhammed_ibrahem_ismael_abd_allah|Muhammed Ibrahem Ismael Abd Allah|/assets/audio/adhan/library/muhammed_ibrahem_ismael_abd_allah.mp3
+mukhtar_abelhamed_hafed|Mukhtar Abelhamed Hafed|/assets/audio/adhan/library/mukhtar_abelhamed_hafed.mp3
+mustafa_ismail_egypt|Mustafa Ismail — Egypt|/assets/audio/adhan/library/mustafa_ismail_egypt.mp3
+mustafa_waled|Mustafa Waled|/assets/audio/adhan/library/mustafa_waled.mp3
+najee_qazaz_al_aqsa_jerusalem|Najee Qazaz — Al Aqsa Jerusalem|/assets/audio/adhan/library/najee_qazaz_al_aqsa_jerusalem.mp3
+nasreddine_toubar|Nasreddine Toubar|/assets/audio/adhan/library/nasreddine_toubar.mp3
+nasser_al_abd_al_jabar_qatar|Nasser Al Abd Al Jabar — Qatar|/assets/audio/adhan/library/nasser_al_abd_al_jabar_qatar.mp3
+nasser_al_obaid_1|Nasser Al Obaid 1|/assets/audio/adhan/library/nasser_al_obaid_1.mp3
+nasser_al_obaid_2|Nasser Al Obaid 2|/assets/audio/adhan/library/nasser_al_obaid_2.mp3
+nasser_al_obaid_3|Nasser Al Obaid 3|/assets/audio/adhan/library/nasser_al_obaid_3.mp3
+nasser_al_qatami_hq|Nasser Al Qatami — HQ|/assets/audio/adhan/library/nasser_al_qatami_hq.mp3
+nasser_al_qatami_1_saudi_arabia|Nasser Al Qatami 1 — Saudi Arabia|/assets/audio/adhan/library/nasser_al_qatami_1_saudi_arabia.mp3
+nasser_al_qatami_2_riyadh|Nasser Al Qatami 2 — Riyadh|/assets/audio/adhan/library/nasser_al_qatami_2_riyadh.mp3
+nayf_fedah_al_haram_al_maki|Nayf Fedah — Al Haram Al Maki|/assets/audio/adhan/library/nayf_fedah_al_haram_al_maki.mp3
+nurdin_hamza_al_maghriby_al_aqsa_jerusalem|NurDin Hamza Al Maghriby — Al Aqsa Jerusalem|/assets/audio/adhan/library/nurdin_hamza_al_maghriby_al_aqsa_jerusalem.mp3
+morocco_kazabri|Morocco — Omar Al Kazabri|/assets/audio/adhan/curated/morocco_kazabri.mp3
+omar_al_omayr|Omar Al Omayr|/assets/audio/adhan/library/omar_al_omayr.mp3
+omran_mansur_egypt|Omran Mansur — Egypt|/assets/audio/adhan/library/omran_mansur_egypt.mp3
+omru_sobhe|Omru Sobhe|/assets/audio/adhan/library/omru_sobhe.mp3
+othman_al_masseme|Othman Al Masseme|/assets/audio/adhan/library/othman_al_masseme.mp3
+rabee_abdul_raheem_essa|Rabee Abdul Raheem Essa|/assets/audio/adhan/library/rabee_abdul_raheem_essa.mp3
+rabeh_ibn_darah_al_jazairi|Rabeh Ibn Darah Al Jazairi|/assets/audio/adhan/library/rabeh_ibn_darah_al_jazairi.mp3
+riad_al_djazairi_algeria|Riad Al Djazairi — Algeria|/assets/audio/adhan/library/riad_al_djazairi_algeria.mp3
+saheb_hane_khatab_palestine|Saheb Hane Khatab — Palestine|/assets/audio/adhan/library/saheb_hane_khatab_palestine.mp3
+saleh_al_nabet_qatar|Saleh Al Nabet — Qatar|/assets/audio/adhan/library/saleh_al_nabet_qatar.mp3
+salem_hamde|Salem Hamde|/assets/audio/adhan/library/salem_hamde.mp3
+samer_al_sagher|Samer Al Sagher|/assets/audio/adhan/library/samer_al_sagher.mp3
+sheikh_al_naqshbandi|Sheikh Al Naqshbandi|/assets/audio/adhan/library/sheikh_al_naqshbandi.mp3
+sheikh_tariq_muhammad|Sheikh Tariq Muhammad|/assets/audio/adhan/library/sheikh_tariq_muhammad.mp3
+taha_al_junayd|Taha Al Junayd|/assets/audio/adhan/library/taha_al_junayd.mp3
+taleb_al_qanube|Taleb Al Qanube|/assets/audio/adhan/library/taleb_al_qanube.mp3
+tamer_islam|Tamer Islam|/assets/audio/adhan/library/tamer_islam.mp3
+tareq_fathe_ahmad|Tareq Fathe Ahmad|/assets/audio/adhan/library/tareq_fathe_ahmad.mp3
+wadi_al_yamani|Wadi Al Yamani|/assets/audio/adhan/library/wadi_al_yamani.mp3
+wadi_hamad_al_yamani|Wadi Hamad Al-Yamani|/assets/audio/adhan/library/wadi_hamad_al_yamani.mp3
+waled_mahsas_1|Waled Mahsas 1|/assets/audio/adhan/library/waled_mahsas_1.mp3
+waled_mahsas_2_algeria|Waled Mahsas 2 — Algeria|/assets/audio/adhan/library/waled_mahsas_2_algeria.mp3
+yaseen_al_aassaf_1|Yaseen Al Aassaf 1|/assets/audio/adhan/library/yaseen_al_aassaf_1.mp3
+yaseen_al_aassaf_2_fajr_iraq|Yaseen Al Aassaf 2 — Fajr Iraq|/assets/audio/adhan/library/yaseen_al_aassaf_2_fajr_iraq.mp3
+yasser_abdu_allah_al_hawre_qatar|Yasser Abdu Allah Al Hawre — Qatar|/assets/audio/adhan/library/yasser_abdu_allah_al_hawre_qatar.mp3
+yasser_al_dosari_saudi_arabia|Yasser Al-Dosari — Saudi Arabia|/assets/audio/adhan/library/yasser_al_dosari_saudi_arabia.mp3
+yasser_al_filkawi|Yasser Al Filkawi|/assets/audio/adhan/library/yasser_al_filkawi.mp3
+zaher_muhammad_taresh|Zaher Muhammad Taresh|/assets/audio/adhan/library/zaher_muhammad_taresh.mp3
+zayd_al_aatya|Zayd Al Aatya|/assets/audio/adhan/library/zayd_al_aatya.mp3

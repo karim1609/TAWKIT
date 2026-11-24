@@ -326,6 +326,7 @@ public class AppController implements PrayerScheduler.Listener, WeatherService.L
 
         audio.setEnabled(settings.isAdhanEnabled());
         audio.setVolume(settings.getAudioVolume());
+        audio.setSelectedAdhan(settings.getAdhanSoundId());
         for (var type : com.tawkit.model.prayer.PrayerType.values()) {
             audio.setCustomAdhanFile(type, settings.getAdhanSoundFile(type)); // #6
         }

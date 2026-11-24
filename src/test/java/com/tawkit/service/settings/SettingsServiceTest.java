@@ -51,6 +51,17 @@ class SettingsServiceTest {
     }
 
     @Test
+    void adhanSoundIdRoundTrip() {
+        SettingsService svc = new SettingsService(tempDir.resolve("s.properties"));
+        AppSettings saved = new AppSettings();
+        saved.setAdhanSoundId("makkah_haram_al_maki");
+        svc.save(saved);
+
+        AppSettings loaded = svc.load();
+        assertEquals("makkah_haram_al_maki", loaded.getAdhanSoundId());
+    }
+
+    @Test
     void legacyFileWithoutNewKeysLoadsDefaults() throws Exception {
         SettingsService svc = new SettingsService(tempDir.resolve("s.properties"));
         AppSettings withData = new AppSettings();

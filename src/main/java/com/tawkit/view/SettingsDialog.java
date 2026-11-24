@@ -9,20 +9,35 @@ import com.tawkit.model.settings.AppSettings;
 import com.tawkit.service.city.CityService;
 import com.tawkit.service.city.CountryCodes;
 import com.tawkit.service.location.PreciseLocationService;
+import com.tawkit.service.audio.AdhanCatalog;
+import com.tawkit.service.audio.AudioService;
 import com.tawkit.service.settings.SettingsService;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.basic.BasicButtonUI;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.BasicSliderUI;
 import javax.swing.plaf.basic.BasicTextFieldUI;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.RoundRectangle2D;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.LinkedHashMap;
 
@@ -30,20 +45,52 @@ import java.util.LinkedHashMap;
  * Full settings dialog, Tawkit-style: location with city picker, prayer
  * calculation, iqama (offset or fixed), audio, display, content, reminders
  * and settings backup (export/import).
+ *
+ * <p>The chrome follows the kiosk's premium language: deep charcoal,
+ * restrained gold accents, serif display type and soft rounded surfaces.
  */
 public class SettingsDialog extends JDialog {
 
-    private static final Color SETTINGS_BG = new Color(0x0E, 0x0F, 0x10);
-    private static final Color SETTINGS_SURFACE = new Color(0x18, 0x19, 0x1A);
-    private static final Color SETTINGS_FIELD = new Color(0x21, 0x22, 0x22);
+    private static final Color SETTINGS_BG = new Color(0x0A, 0x0B, 0x0C);
+    private static final Color SETTINGS_SURFACE = new Color(0x11, 0x12, 0x14);
+    private static final Color SETTINGS_CARD = new Color(0x15, 0x16, 0x18);
+    private static final Color SETTINGS_FIELD = new Color(0x1E, 0x1F, 0x21);
     private static final Color SETTINGS_ACCENT = TawkitTheme.GOLDEN_BEIGE;
+    private static final Color SETTINGS_ACCENT_LIGHT = new Color(0xE1, 0xC4, 0x86);
     private static final Color SETTINGS_TEXT = TawkitTheme.WARM_WHITE;
-    private static final Color SETTINGS_MUTED = new Color(0xA8, 0xA8, 0xA8);
-    private static final Color SETTINGS_LINE = new Color(0x35, 0x35, 0x33);
+    private static final Color SETTINGS_MUTED = new Color(0xA7, 0xA3, 0x99);
+    private static final Color SETTINGS_DIM = new Color(0x7D, 0x7A, 0x72);
+    private static final Color SETTINGS_LINE = new Color(0x2C, 0x2D, 0x2F);
+    private static final Color SETTINGS_LINE_WARM = new Color(0x42, 0x3C, 0x2E);
+
+    private static final int CARD_ARC = 18;
 
     private static final PrayerType[] IQAMA_PRAYERS = {
             PrayerType.FAJR, PrayerType.DHUHR, PrayerType.ASR, PrayerType.MAGHRIB, PrayerType.ISHA
     };
+
+    /** Icon + supporting copy for one settings section. */
+    private record SectionInfo(String title, Glyph glyph, String description) {
+    }
+
+    private static final Map<String, SectionInfo> SECTION_INFO = Map.of(
+            "Location", new SectionInfo("Location", Glyph.LOCATION,
+                    "Set the place, coordinates and timezone used for prayer times."),
+            "Prayer", new SectionInfo("Prayer calculation", Glyph.PRAYER,
+                    "Choose how prayer times are calculated and fine-tune each prayer."),
+            "Iqama", new SectionInfo("Iqama", Glyph.IQAMA,
+                    "Define congregation timing after the adhan or at a fixed clock time."),
+            "Audio", new SectionInfo("Adhan & sound", Glyph.AUDIO,
+                    "Select the recitation, set the volume, and configure prayer alerts."),
+            "Display", new SectionInfo("Display", Glyph.DISPLAY,
+                    "Shape the look of the kiosk and preview changes as you make them."),
+            "Content", new SectionInfo("Content", Glyph.CONTENT,
+                    "Control announcements, slides, weather and content rotation."),
+            "Reminders", new SectionInfo("Reminders", Glyph.REMINDERS,
+                    "Schedule sound alerts before and after prayer."),
+            "Backup", new SectionInfo("Backup", Glyph.BACKUP,
+                    "Copy this screen's configuration to another Tawkit display.")
+    );
 
     private final CityService cityService = new CityService();
     /** Prevents intermediate JComboBox events while rebuilding the city list. */
@@ -57,7 +104,7 @@ public class SettingsDialog extends JDialog {
     private final JTextField lonField = new JTextField(8);
     private final JTextField timezoneField = new JTextField(5);
     private final JButton useMyLocationButton = new JButton("⌖ Use my location");
-    private final JLabel locationStatus = new JLabel(" ");
+    private final JLabel locationStatus = styledLabel(new JLabel(" "));
     private final PreciseLocationService locationService = new PreciseLocationService();
     /**
      * Exact location returned by "Use my location" — carries the real city
@@ -82,8 +129,16 @@ public class SettingsDialog extends JDialog {
     private final JSlider volumeSlider = new JSlider(0, 100, 100);
     private final JCheckBox preFajrAlertCheck = new JCheckBox("Alert before Fajr", true);
     private final JSpinner preFajrMinutes = new JSpinner(new SpinnerNumberModel(10, 1, 60, 1));
-    /** Custom adhan WAV per prayer (#6) — empty text uses the bundled sound. */
+    /** Bundled recordings, chosen by name and applied to every prayer. */
+    private final JComboBox<AdhanCatalog.Entry> adhanCombo = new JComboBox<>();
+    /** Narrows the large recording list while typing. */
+    private final JTextField adhanSearch = new JTextField(14);
+    private AdhanCatalog.Entry lastAdhanSelection = AdhanCatalog.BUNDLED_DEFAULT;
+    private boolean rebuildingAdhanChoices = false;
+    private final AudioService previewAudio = new AudioService();
+    /** Custom adhan file per prayer (#6) — empty text uses the selected recording. */
     private final Map<PrayerType, JTextField> adhanFileFields = new LinkedHashMap<>();
+    private final JLabel adhanSelectionStatus = hintLabel("Using bundled adhan");
 
     // Jumu'a (#5)
     private final JCheckBox jumuaCheck = new JCheckBox("Jumu'a mode (khutba time replaces Dhuhr iqama on Fridays)", true);
@@ -141,10 +196,12 @@ public class SettingsDialog extends JDialog {
         loadCityCountries();
         Rectangle screen = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
         double scale = UiScale.factor();
-        int w = (int) Math.min(680 * scale, screen.width * 0.92);
-        int h = (int) Math.min(760 * scale, screen.height * 0.92);
+        // The premium chrome gives the nav column and cards room to breathe;
+        // keep enough width for the two-column forms at 100% scaling.
+        int w = (int) Math.min(820 * scale, screen.width * 0.92);
+        int h = (int) Math.min(780 * scale, screen.height * 0.92);
         setSize(w, h);
-        setMinimumSize(new Dimension(Math.min(520, screen.width), Math.min(480, screen.height)));
+        setMinimumSize(new Dimension(Math.min(780, screen.width), Math.min(560, screen.height)));
         setResizable(true);
         setLocationRelativeTo(null);
         // ESC closes the dialog like Cancel
@@ -161,35 +218,63 @@ public class SettingsDialog extends JDialog {
             @Override
             public void windowClosed(java.awt.event.WindowEvent e) {
                 previewScreen.stop();
+                previewAudio.stop();
             }
         });
     }
 
     private void buildUI() {
-        getContentPane().setBackground(SETTINGS_BG);
-        setLayout(new BorderLayout(0, 0));
+        JPanel root = new JPanel(new BorderLayout(0, 0)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setPaint(new GradientPaint(
+                        0, 0, new Color(0x0C, 0x0D, 0x0F),
+                        0, getHeight(), new Color(0x07, 0x07, 0x08)));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                // A restrained golden glow keeps the dark chrome from feeling flat.
+                float radius = Math.max(420f, getWidth() * 0.72f);
+                RadialGradientPaint glow = new RadialGradientPaint(
+                        new Point2D.Float(getWidth() * 0.27f, 0),
+                        radius,
+                        new float[]{0f, 1f},
+                        new Color[]{new Color(197, 166, 106, 30),
+                                new Color(197, 166, 106, 0)});
+                g2.setPaint(glow);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
+        };
+        root.setOpaque(false);
+        setContentPane(root);
 
-        add(buildSettingsHeader(), BorderLayout.NORTH);
+        root.add(buildSettingsHeader(), BorderLayout.NORTH);
 
-        JPanel workspace = new JPanel(new BorderLayout(10, 0));
+        JPanel workspace = new JPanel(new BorderLayout(16, 0));
         workspace.setOpaque(false);
-        workspace.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        workspace.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
 
-        JPanel nav = new JPanel();
-        nav.setOpaque(true);
-        nav.setBackground(new Color(0x13, 0x14, 0x16));
-        nav.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(SETTINGS_LINE, 1, true),
-                BorderFactory.createEmptyBorder(8, 8, 8, 8)));
+        RoundedPanel nav = new RoundedPanel(
+                new Color(0x11, 0x12, 0x14), new Color(0x0F, 0x10, 0x12),
+                new Color(0x2D, 0x2C, 0x27), CARD_ARC);
         nav.setLayout(new BoxLayout(nav, BoxLayout.Y_AXIS));
+        nav.setBorder(BorderFactory.createEmptyBorder(18, 12, 14, 12));
+        nav.setPreferredSize(new Dimension(214, 0));
+
+        JLabel navKicker = kicker("CONFIGURE");
+        navKicker.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+        navKicker.setAlignmentX(Component.LEFT_ALIGNMENT);
+        nav.add(navKicker);
+        nav.add(Box.createVerticalStrut(15));
 
         CardLayout cards = new CardLayout();
-        JPanel content = new JPanel(cards);
-        content.setOpaque(true);
-        content.setBackground(new Color(0x16, 0x17, 0x19));
-        content.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(SETTINGS_LINE, 1, true),
-                BorderFactory.createEmptyBorder(4, 4, 4, 4)));
+        RoundedPanel content = new RoundedPanel(
+                new Color(0x16, 0x17, 0x19), new Color(0x13, 0x14, 0x16),
+                new Color(0x2F, 0x2E, 0x29), CARD_ARC);
+        content.setLayout(cards);
+        content.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
 
         Map<String, JPanel> sections = new LinkedHashMap<>();
         sections.put("Location", buildLocationTab());
@@ -201,68 +286,89 @@ public class SettingsDialog extends JDialog {
         sections.put("Reminders", buildRemindersTab());
         sections.put("Backup", buildBackupTab());
 
-        List<JButton> navButtons = new ArrayList<>();
+        List<NavButton> navButtons = new ArrayList<>();
+        int sectionNumber = 1;
         for (Map.Entry<String, JPanel> entry : sections.entrySet()) {
-            JScrollPane scroll = buildScrollableTab(entry.getValue());
+            JScrollPane scroll = buildScrollableTab(entry.getKey(), sectionNumber, entry.getValue());
             content.add(scroll, entry.getKey());
 
-            JButton navButton = new JButton(entry.getKey());
-            navButton.putClientProperty("tawkitStyled", Boolean.TRUE);
+            SectionInfo info = SECTION_INFO.get(entry.getKey());
+            NavButton navButton = new NavButton(entry.getKey(),
+                    info != null ? info.glyph() : Glyph.CONTENT);
             navButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-            navButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-            navButton.setHorizontalAlignment(SwingConstants.LEFT);
-            navButton.setOpaque(true);
-            navButton.setContentAreaFilled(true);
-            navButton.setBorderPainted(false);
-            navButton.setFocusPainted(false);
-            navButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            navButton.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
-            navButton.setForeground(SETTINGS_MUTED);
-            navButton.setBackground(new Color(0x13, 0x14, 0x16));
-            navButton.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
             navButton.addActionListener(e -> {
                 cards.show(content, entry.getKey());
-                for (JButton button : navButtons) {
-                    boolean selected = button == navButton;
-                    button.setForeground(selected ? TawkitTheme.BLACK : SETTINGS_MUTED);
-                    button.setBackground(selected ? SETTINGS_ACCENT : new Color(0x13, 0x14, 0x16));
+                for (NavButton button : navButtons) {
+                    button.setSelectedLook(button == navButton);
                 }
             });
             navButtons.add(navButton);
             nav.add(navButton);
             if (navButtons.size() < sections.size()) {
-                nav.add(Box.createVerticalStrut(4));
+                nav.add(Box.createVerticalStrut(3));
             }
+            sectionNumber++;
         }
 
         if (!navButtons.isEmpty()) {
-            JButton first = navButtons.get(0);
-            first.setForeground(TawkitTheme.BLACK);
-            first.setBackground(SETTINGS_ACCENT);
+            navButtons.get(0).setSelectedLook(true);
         }
-        nav.setPreferredSize(new Dimension(155, 0));
+
+        nav.add(Box.createVerticalGlue());
+        JPanel navFooter = new JPanel(new FlowLayout(FlowLayout.LEFT, 7, 0));
+        navFooter.setOpaque(false);
+        navFooter.setAlignmentX(Component.LEFT_ALIGNMENT);
+        navFooter.setBorder(BorderFactory.createEmptyBorder(14, 7, 0, 0));
+        JLabel onlineDot = styledLabel(new JLabel("●"));
+        onlineDot.setForeground(new Color(0x7F, 0xB6, 0x88));
+        onlineDot.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 8));
+        JLabel localLabel = styledLabel(new JLabel("LOCAL CONFIGURATION"));
+        localLabel.setForeground(SETTINGS_DIM);
+        localLabel.setFont(tracked(new Font(Font.SANS_SERIF, Font.BOLD, 9), 0.12));
+        localLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+        navFooter.add(onlineDot);
+        navFooter.add(localLabel);
+        nav.add(navFooter);
+
         workspace.add(nav, BorderLayout.WEST);
         workspace.add(content, BorderLayout.CENTER);
-        add(workspace, BorderLayout.CENTER);
+        root.add(workspace, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new BorderLayout());
-        buttonPanel.setBackground(SETTINGS_SURFACE);
-        buttonPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(1, 0, 0, 0, SETTINGS_LINE),
-                BorderFactory.createEmptyBorder(11, 16, 11, 16)));
+        JPanel buttonPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setPaint(new GradientPaint(
+                        0, 0, new Color(0x12, 0x13, 0x15),
+                        0, getHeight(), new Color(0x0D, 0x0E, 0x10)));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setColor(SETTINGS_LINE_WARM);
+                g2.drawLine(0, 0, getWidth(), 0);
+                g2.dispose();
+            }
+        };
+        buttonPanel.setOpaque(false);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(13, 24, 13, 24));
 
-        JLabel status = new JLabel("Save to keep  •  Apply to update now");
+        JPanel statusRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        statusRow.setOpaque(false);
+        JLabel statusDot = styledLabel(new JLabel("●"));
+        statusDot.setForeground(SETTINGS_ACCENT);
+        statusDot.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 8));
+        JLabel status = styledLabel(new JLabel("Saved locally   ·   Apply to update live"));
         status.setForeground(SETTINGS_MUTED);
         status.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
-        buttonPanel.add(status, BorderLayout.WEST);
+        statusRow.add(statusDot);
+        statusRow.add(status);
+        buttonPanel.add(statusRow, BorderLayout.WEST);
 
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 9, 0));
         actions.setOpaque(false);
         JButton cancelButton = styleButton(new JButton("Cancel"), false);
         JButton applyButton = styleButton(new JButton("Apply"), false);
         applyButton.setToolTipText("Apply changes to the app without closing");
         applyButton.addActionListener(e -> applyNow());
-        JButton saveButton = styleButton(new JButton("Save"), true);
+        JButton saveButton = styleButton(new JButton("Save changes"), true);
         saveButton.addActionListener(e -> {
             saved = true;
             applyNow();
@@ -273,80 +379,208 @@ public class SettingsDialog extends JDialog {
         actions.add(applyButton);
         actions.add(saveButton);
         buttonPanel.add(actions, BorderLayout.EAST);
-        add(buttonPanel, BorderLayout.SOUTH);
+        root.add(buttonPanel, BorderLayout.SOUTH);
 
+        getRootPane().setDefaultButton(saveButton);
+        styleSettingsComponents();
+        // A second pass catches LAF-created children (combo/spinner arrows).
         SwingUtilities.invokeLater(this::styleSettingsComponents);
     }
 
     private JPanel buildSettingsHeader() {
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(SETTINGS_SURFACE);
-        header.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createMatteBorder(0, 0, 1, 0, SETTINGS_LINE),
-                BorderFactory.createEmptyBorder(14, 18, 14, 18)));
+        JPanel header = new JPanel(new BorderLayout(18, 0)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setPaint(new GradientPaint(
+                        0, 0, new Color(0x15, 0x16, 0x18),
+                        0, getHeight(), new Color(0x0D, 0x0E, 0x10)));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setPaint(new GradientPaint(
+                        0, 0, new Color(197, 166, 106, 95),
+                        getWidth(), 0, new Color(197, 166, 106, 0)));
+                g2.fillRect(0, getHeight() - 1, getWidth(), 1);
+                g2.dispose();
+            }
+        };
+        header.setOpaque(false);
+        header.setBorder(BorderFactory.createEmptyBorder(22, 26, 19, 26));
 
-        JLabel mark = new JLabel("TAWKIT");
-        mark.setForeground(SETTINGS_ACCENT);
-        mark.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 11));
-        mark.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(SETTINGS_ACCENT.getRed(),
-                        SETTINGS_ACCENT.getGreen(), SETTINGS_ACCENT.getBlue(), 120), 1, true),
-                BorderFactory.createEmptyBorder(5, 8, 5, 8)));
-        header.add(mark, BorderLayout.WEST);
+        JPanel brand = new JPanel(new BorderLayout(14, 0));
+        brand.setOpaque(false);
+        brand.add(buildEmblem(), BorderLayout.WEST);
 
         JPanel title = new JPanel();
         title.setOpaque(false);
         title.setLayout(new BoxLayout(title, BoxLayout.Y_AXIS));
-        JLabel heading = new JLabel("Settings");
+
+        JLabel eyebrow = kicker("TAWKIT   ·   CONTROL CENTER");
+        eyebrow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel heading = styledLabel(new JLabel("Settings"));
         heading.setForeground(SETTINGS_TEXT);
-        heading.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 22));
+        heading.setFont(TawkitTheme.serif(Font.BOLD, 27));
         heading.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JLabel subtitle = new JLabel("Configure Tawkit for this screen");
+        JLabel subtitle = styledLabel(new JLabel("Curate every detail of your kiosk."));
         subtitle.setForeground(SETTINGS_MUTED);
         subtitle.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
         subtitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        title.add(eyebrow);
+        title.add(Box.createVerticalStrut(5));
         title.add(heading);
         title.add(Box.createVerticalStrut(2));
         title.add(subtitle);
-        header.add(title, BorderLayout.CENTER);
+        brand.add(title, BorderLayout.CENTER);
+        header.add(brand, BorderLayout.WEST);
+
+        JPanel badge = new JPanel(new FlowLayout(FlowLayout.LEFT, 7, 0));
+        badge.setOpaque(false);
+        badge.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(197, 166, 106, 55), 1, true),
+                BorderFactory.createEmptyBorder(7, 12, 7, 12)));
+        JLabel badgeDot = styledLabel(new JLabel("●"));
+        badgeDot.setForeground(new Color(0x7F, 0xB6, 0x88));
+        badgeDot.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 8));
+        JLabel badgeText = styledLabel(new JLabel("THIS SCREEN"));
+        badgeText.setForeground(SETTINGS_MUTED);
+        badgeText.setFont(tracked(new Font(Font.SANS_SERIF, Font.BOLD, 9), 0.12));
+        badgeText.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+        badge.add(badgeDot);
+        badge.add(badgeText);
+        JPanel badgeHolder = new JPanel(new GridBagLayout());
+        badgeHolder.setOpaque(false);
+        badgeHolder.add(badge);
+        header.add(badgeHolder, BorderLayout.EAST);
         return header;
     }
 
-    private JScrollPane buildScrollableTab(JPanel content) {
-        styleTabPanel(content);
-        JScrollPane scroll = new JScrollPane(content);
+    /** Small app emblem, or a gold monogram if the bundled icon is missing. */
+    private JComponent buildEmblem() {
+        JLabel emblem = styledLabel(new JLabel());
+        emblem.setHorizontalAlignment(SwingConstants.CENTER);
+        emblem.setVerticalAlignment(SwingConstants.CENTER);
+        emblem.setOpaque(false);
+        Image icon = Icons.appIcon();
+        if (icon != null) {
+            emblem.setIcon(new ImageIcon(icon.getScaledInstance(42, 42, Image.SCALE_SMOOTH)));
+        } else {
+            emblem.setText("T");
+            emblem.setForeground(SETTINGS_ACCENT);
+            emblem.setFont(TawkitTheme.serif(Font.BOLD, 24));
+        }
+        emblem.setPreferredSize(new Dimension(48, 48));
+        emblem.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(197, 166, 106, 90), 1, true),
+                BorderFactory.createEmptyBorder(2, 2, 2, 2)));
+        return emblem;
+    }
+
+    private JScrollPane buildScrollableTab(String section, int number, JPanel content) {
+        JPanel page = buildSectionPage(section, number, content);
+        JScrollPane scroll = new JScrollPane(page);
         scroll.setBorder(null);
-        scroll.getViewport().setBackground(SETTINGS_BG);
-        scroll.setBackground(SETTINGS_BG);
+        scroll.setOpaque(false);
+        scroll.getViewport().setOpaque(false);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scroll.getVerticalScrollBar().setUI(new PremiumScrollBarUI());
+        scroll.getVerticalScrollBar().setOpaque(false);
+        scroll.getVerticalScrollBar().setPreferredSize(new Dimension(9, 0));
         scroll.getVerticalScrollBar().setUnitIncrement(18);
         scroll.getVerticalScrollBar().setBlockIncrement(120);
         return scroll;
     }
 
-    private void styleTabPanel(JPanel panel) {
-        panel.setOpaque(true);
-        panel.setBackground(SETTINGS_BG);
-        panel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createEmptyBorder(8, 8, 8, 8),
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(new Color(0x27, 0x29, 0x2C), 1, true),
-                        BorderFactory.createEmptyBorder(16, 18, 16, 18))));
+    private JPanel buildSectionPage(String section, int number, JPanel content) {
+        SectionInfo info = SECTION_INFO.get(section);
+        String title = info != null ? info.title() : section;
+        String description = info != null ? info.description() : "";
+
+        ScrollablePage page = new ScrollablePage();
+        page.setLayout(new BorderLayout(0, 20));
+        page.setOpaque(false);
+        page.setBorder(BorderFactory.createEmptyBorder(28, 30, 30, 30));
+
+        JPanel header = new JPanel();
+        header.setOpaque(false);
+        header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
+
+        JLabel kicker = kicker(String.format(Locale.ROOT, "SECTION %02d", number));
+        kicker.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel heading = styledLabel(new JLabel(title));
+        heading.setForeground(SETTINGS_TEXT);
+        heading.setFont(TawkitTheme.serif(Font.BOLD, 23));
+        heading.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel descriptionLabel = styledLabel(new JLabel(description));
+        descriptionLabel.setForeground(SETTINGS_MUTED);
+        descriptionLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        descriptionLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        header.add(kicker);
+        header.add(Box.createVerticalStrut(6));
+        header.add(heading);
+        header.add(Box.createVerticalStrut(4));
+        header.add(descriptionLabel);
+        header.add(Box.createVerticalStrut(15));
+
+        JComponent rule = new JComponent() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setPaint(new GradientPaint(
+                        0, 0, new Color(197, 166, 106, 85),
+                        getWidth(), 0, new Color(197, 166, 106, 0)));
+                g2.fillRect(0, 0, getWidth(), 1);
+                g2.dispose();
+            }
+        };
+        rule.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+        rule.setPreferredSize(new Dimension(10, 1));
+        header.add(rule);
+        page.add(header, BorderLayout.NORTH);
+        page.add(content, BorderLayout.CENTER);
+        return page;
+    }
+
+    /** A page that fills the scroll viewport width while keeping its own height. */
+    private static final class ScrollablePage extends JPanel implements Scrollable {
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 18;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return Math.max(80, visibleRect.height - 40);
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
     }
 
     private JButton styleButton(JButton button, boolean primary) {
         button.putClientProperty("tawkitStyled", Boolean.TRUE);
-        button.setUI(new BasicButtonUI());
+        button.putClientProperty("tawkitPrimary", primary);
+        button.setUI(new PremiumButtonUI());
         button.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
         button.setFocusPainted(false);
         button.setBorderPainted(false);
-        button.setContentAreaFilled(true);
+        button.setContentAreaFilled(false);
+        button.setOpaque(false);
         button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(primary ? SETTINGS_ACCENT : SETTINGS_LINE, 1, true),
-                BorderFactory.createEmptyBorder(7, 14, 7, 14)));
-        button.setOpaque(true);
-        button.setBackground(primary ? SETTINGS_ACCENT : SETTINGS_FIELD);
-        button.setForeground(primary ? TawkitTheme.BLACK : SETTINGS_TEXT);
+        button.setBorder(BorderFactory.createEmptyBorder(
+                primary ? 10 : 9, primary ? 20 : 16, primary ? 10 : 9, primary ? 20 : 16));
+        button.setForeground(primary ? new Color(0x14, 0x11, 0x09) : SETTINGS_TEXT);
         return button;
     }
 
@@ -357,72 +591,149 @@ public class SettingsDialog extends JDialog {
     }
 
     private void styleSettingsComponent(Component component) {
+        if (component instanceof NavButton) {
+            return;
+        }
+
         if (component instanceof JButton button) {
-            if (button.getClientProperty("tawkitStyled") != Boolean.TRUE) {
-                button.setUI(new BasicButtonUI());
-                button.setOpaque(true);
-                button.setForeground(SETTINGS_TEXT);
-                button.setBackground(SETTINGS_FIELD);
-                button.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
-                button.setFocusPainted(false);
+            if (Boolean.TRUE.equals(button.getClientProperty("tawkitChrome"))) {
+                button.setOpaque(false);
+                button.setContentAreaFilled(false);
                 button.setBorderPainted(false);
-                button.setContentAreaFilled(true);
+                button.setFocusPainted(false);
+            } else if (button.getClientProperty("tawkitStyled") != Boolean.TRUE) {
+                button.putClientProperty("tawkitStyled", Boolean.TRUE);
+                button.putClientProperty("tawkitPrimary", Boolean.FALSE);
+                button.setUI(new PremiumButtonUI());
+                button.setOpaque(false);
+                button.setContentAreaFilled(false);
+                button.setBorderPainted(false);
+                button.setFocusPainted(false);
+                button.setForeground(SETTINGS_TEXT);
+                button.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 12));
                 button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                button.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(SETTINGS_LINE, 1, true),
-                        BorderFactory.createEmptyBorder(6, 10, 6, 10)));
+                button.setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
             }
         } else if (component instanceof JTextField field) {
-            field.setUI(new BasicTextFieldUI());
-            field.setOpaque(true);
-            field.setBackground(SETTINGS_FIELD);
+            boolean spinnerEditor = SwingUtilities.getAncestorOfClass(JSpinner.class, field) != null;
             field.setForeground(SETTINGS_TEXT);
             field.setCaretColor(SETTINGS_ACCENT);
-            field.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(SETTINGS_LINE, 1, true),
-                    BorderFactory.createEmptyBorder(6, 8, 6, 8)));
+            if (spinnerEditor) {
+                field.setOpaque(false);
+                field.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 2));
+            } else if (field.getClientProperty("tawkitFieldStyled") != Boolean.TRUE) {
+                field.putClientProperty("tawkitFieldStyled", Boolean.TRUE);
+                field.setUI(new PremiumTextFieldUI());
+                field.setOpaque(true);
+                field.setBorder(BorderFactory.createEmptyBorder(7, 10, 7, 10));
+                field.addFocusListener(new FocusAdapter() {
+                    @Override public void focusGained(FocusEvent e) {
+                        field.repaint();
+                    }
+
+                    @Override public void focusLost(FocusEvent e) {
+                        field.repaint();
+                    }
+                });
+            }
         } else if (component instanceof JTextArea area) {
-            area.setOpaque(true);
-            area.setBackground(SETTINGS_FIELD);
+            area.setOpaque(false);
             area.setForeground(SETTINGS_TEXT);
             area.setCaretColor(SETTINGS_ACCENT);
-            area.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+            area.setSelectionColor(new Color(0x55, 0x47, 0x2B));
+            area.setSelectedTextColor(SETTINGS_TEXT);
+            area.setBorder(BorderFactory.createEmptyBorder(9, 10, 9, 10));
         } else if (component instanceof JComboBox<?> combo) {
-            combo.setUI(new BasicComboBoxUI());
-            combo.setOpaque(true);
-            combo.setBackground(SETTINGS_FIELD);
-            combo.setForeground(SETTINGS_TEXT);
-            combo.setBorder(BorderFactory.createLineBorder(SETTINGS_LINE, 1, true));
+            if (combo.getClientProperty("tawkitComboStyled") != Boolean.TRUE) {
+                combo.putClientProperty("tawkitComboStyled", Boolean.TRUE);
+                combo.setUI(new PremiumComboBoxUI());
+                combo.setOpaque(false);
+                combo.setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 6));
+                combo.setForeground(SETTINGS_TEXT);
+                combo.setRenderer(new DarkComboRenderer());
+                combo.addFocusListener(new FocusAdapter() {
+                    @Override public void focusGained(FocusEvent e) {
+                        combo.repaint();
+                    }
+
+                    @Override public void focusLost(FocusEvent e) {
+                        combo.repaint();
+                    }
+                });
+            }
         } else if (component instanceof JSpinner spinner) {
-            spinner.setOpaque(true);
-            spinner.setBackground(SETTINGS_FIELD);
-            spinner.setBorder(BorderFactory.createLineBorder(SETTINGS_LINE, 1, true));
-            JComponent editor = spinner.getEditor();
-            editor.setOpaque(true);
-            editor.setBackground(SETTINGS_FIELD);
-            if (editor instanceof JSpinner.DefaultEditor spinnerEditor) {
-                spinnerEditor.getTextField().setForeground(SETTINGS_TEXT);
-                spinnerEditor.getTextField().setCaretColor(SETTINGS_ACCENT);
-                spinnerEditor.getTextField().setOpaque(true);
-                spinnerEditor.getTextField().setBackground(SETTINGS_FIELD);
+            if (spinner.getClientProperty("tawkitSpinnerStyled") != Boolean.TRUE) {
+                spinner.putClientProperty("tawkitSpinnerStyled", Boolean.TRUE);
+                spinner.setUI(new PremiumSpinnerUI());
+                spinner.setOpaque(false);
+                spinner.setBorder(new RoundedBorder(
+                        SETTINGS_FIELD, SETTINGS_LINE, 9, 8, 3));
+                JComponent editor = spinner.getEditor();
+                editor.setOpaque(false);
+                if (editor instanceof JSpinner.DefaultEditor spinnerEditor) {
+                    JTextField field = spinnerEditor.getTextField();
+                    field.setForeground(SETTINGS_TEXT);
+                    field.setCaretColor(SETTINGS_ACCENT);
+                    field.setOpaque(false);
+                    field.setBorder(BorderFactory.createEmptyBorder(2, 3, 2, 3));
+                    field.addFocusListener(new FocusAdapter() {
+                        @Override public void focusGained(FocusEvent e) {
+                            spinner.repaint();
+                        }
+
+                        @Override public void focusLost(FocusEvent e) {
+                            spinner.repaint();
+                        }
+                    });
+                }
             }
         } else if (component instanceof JCheckBox check) {
             check.setOpaque(false);
             check.setForeground(SETTINGS_TEXT);
+            check.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+            check.setIconTextGap(10);
+            check.setIcon(new CheckIcon(false));
+            check.setSelectedIcon(new CheckIcon(true));
+            check.setRolloverIcon(new CheckIcon(false));
+            check.setRolloverSelectedIcon(new CheckIcon(true));
+            check.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 0));
         } else if (component instanceof JSlider slider) {
             slider.setOpaque(false);
             slider.setForeground(SETTINGS_ACCENT);
+            if (!(slider.getUI() instanceof PremiumSliderUI)) {
+                slider.setUI(new PremiumSliderUI(slider));
+                slider.setPreferredSize(new Dimension(180, 34));
+            }
         } else if (component instanceof JLabel label) {
-            label.setForeground(SETTINGS_TEXT);
-            label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+            if (Boolean.TRUE.equals(label.getClientProperty("tawkitLabelStyled"))) {
+                // Already typographically styled by the premium chrome.
+            } else if (Boolean.TRUE.equals(label.getClientProperty("tawkitMuted"))) {
+                label.setForeground(SETTINGS_MUTED);
+                label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+            } else {
+                label.setForeground(SETTINGS_MUTED);
+                label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+            }
         } else if (component instanceof JList<?> list) {
-            list.setBackground(SETTINGS_FIELD);
+            list.setOpaque(false);
             list.setForeground(SETTINGS_TEXT);
-            list.setSelectionBackground(new Color(0x44, 0x3A, 0x28));
-            list.setSelectionForeground(SETTINGS_ACCENT);
+            list.setSelectionBackground(new Color(0x36, 0x2F, 0x21));
+            list.setSelectionForeground(SETTINGS_ACCENT_LIGHT);
+            list.setFixedCellHeight(30);
+            list.setCellRenderer(new DarkListRenderer());
         } else if (component instanceof JScrollPane scroll) {
-            scroll.setBackground(SETTINGS_BG);
-            scroll.getViewport().setBackground(SETTINGS_BG);
+            if (scroll.getViewport().getView() instanceof ScrollablePage) {
+                scroll.setOpaque(false);
+                scroll.getViewport().setOpaque(false);
+            } else {
+                scroll.setOpaque(false);
+                scroll.getViewport().setOpaque(false);
+                scroll.setBorder(new RoundedBorder(
+                        SETTINGS_FIELD, SETTINGS_LINE, 10, 0, 0));
+                scroll.getVerticalScrollBar().setUI(new PremiumScrollBarUI());
+                scroll.getVerticalScrollBar().setOpaque(false);
+                scroll.getVerticalScrollBar().setPreferredSize(new Dimension(9, 0));
+            }
         } else if (component instanceof JPanel panel) {
             Color bg = panel.getBackground();
             boolean preserve =
@@ -439,6 +750,651 @@ public class SettingsDialog extends JDialog {
             for (Component child : container.getComponents()) {
                 styleSettingsComponent(child);
             }
+        }
+    }
+
+    private static JLabel styledLabel(JLabel label) {
+        label.putClientProperty("tawkitLabelStyled", Boolean.TRUE);
+        return label;
+    }
+
+    /** Small supporting copy shown under a control. */
+    private static JLabel hintLabel(String text) {
+        JLabel label = styledLabel(new JLabel(text));
+        label.setForeground(SETTINGS_MUTED);
+        label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 11));
+        return label;
+    }
+
+    /** Lays several checkboxes out on one line with generous breathing room. */
+    private static JPanel checkRow(JCheckBox... boxes) {
+        JPanel row = new JPanel();
+        row.setOpaque(false);
+        row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
+        for (int i = 0; i < boxes.length; i++) {
+            if (i > 0) row.add(Box.createHorizontalStrut(26));
+            row.add(boxes[i]);
+        }
+        row.add(Box.createHorizontalGlue());
+        return row;
+    }
+
+    private static JLabel kicker(String text) {
+        JLabel label = styledLabel(new JLabel(text));
+        label.setForeground(SETTINGS_ACCENT);
+        label.setFont(tracked(new Font(Font.SANS_SERIF, Font.BOLD, 10), 0.16));
+        label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 6));
+        return label;
+    }
+
+    private static Font tracked(Font base, double amount) {
+        return base.deriveFont(Map.of(java.awt.font.TextAttribute.TRACKING, amount));
+    }
+
+    // ---------------------------------------------------------- premium chrome
+
+    private static final class RoundedPanel extends JPanel {
+        private final Color top;
+        private final Color bottom;
+        private final Color border;
+        private final int arc;
+
+        RoundedPanel(Color top, Color bottom, Color border, int arc) {
+            this.top = top;
+            this.bottom = bottom;
+            this.border = border;
+            this.arc = arc;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth();
+            int h = getHeight();
+            g2.setPaint(new GradientPaint(0, 0, top, 0, h, bottom));
+            g2.fillRoundRect(0, 0, w - 1, h - 1, arc, arc);
+            if (border != null) {
+                g2.setColor(border);
+                g2.drawRoundRect(0, 0, w - 1, h - 1, arc, arc);
+            }
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private static final class PremiumTextFieldUI extends BasicTextFieldUI {
+        @Override
+        protected void paintBackground(Graphics g) {
+            JComponent c = getComponent();
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(SETTINGS_FIELD);
+            g2.fillRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, 10, 10);
+            g2.setColor(c.hasFocus() ? SETTINGS_ACCENT : SETTINGS_LINE);
+            g2.drawRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, 10, 10);
+            g2.dispose();
+        }
+    }
+
+    private static final class RoundedBorder extends javax.swing.border.AbstractBorder {
+        private final Color fill;
+        private final Color line;
+        private final int arc;
+        private final Insets insets;
+
+        RoundedBorder(Color fill, Color line, int arc, int padX, int padY) {
+            this.fill = fill;
+            this.line = line;
+            this.arc = arc;
+            this.insets = new Insets(padY + 1, padX + 1, padY + 1, padX + 1);
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c) {
+            return insets;
+        }
+
+        @Override
+        public Insets getBorderInsets(Component c, Insets target) {
+            target.set(insets.top, insets.left, insets.bottom, insets.right);
+            return target;
+        }
+
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            if (fill != null) {
+                g2.setColor(fill);
+                g2.fillRoundRect(x, y, width - 1, height - 1, arc, arc);
+            }
+            Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+            boolean focused = focus != null
+                    && (focus == c || SwingUtilities.isDescendingFrom(focus, c));
+            g2.setColor(focused ? SETTINGS_ACCENT : line);
+            g2.drawRoundRect(x, y, width - 1, height - 1, arc, arc);
+            g2.dispose();
+        }
+    }
+
+    private static final class DarkComboRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value,
+                int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            setBorder(BorderFactory.createEmptyBorder(6, 10, 6, 10));
+            setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+            if (index < 0) {
+                setOpaque(false);
+                setBackground(new Color(0, 0, 0, 0));
+            } else {
+                setOpaque(true);
+                setBackground(isSelected
+                        ? new Color(0x35, 0x2E, 0x20)
+                        : new Color(0x1B, 0x1C, 0x1E));
+            }
+            setForeground(isSelected ? SETTINGS_ACCENT_LIGHT : SETTINGS_TEXT);
+            if (value instanceof CalculationMethod method) {
+                setText(method.getDisplayName());
+            } else if (value instanceof AsrMethod method) {
+                setText(method == AsrMethod.HANAFI
+                        ? "Hanafi (shadow x2)" : "Standard (shadow x1)");
+            } else {
+                setText(value == null ? "" : value.toString());
+            }
+            return this;
+        }
+    }
+
+    private static final class DarkListRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value,
+                int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+            setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+            setOpaque(isSelected);
+            setBackground(new Color(0x35, 0x2E, 0x20));
+            setForeground(isSelected ? SETTINGS_ACCENT_LIGHT : SETTINGS_TEXT);
+            return this;
+        }
+    }
+
+    private static final class CheckIcon implements Icon {
+        private final boolean selected;
+
+        CheckIcon(boolean selected) {
+            this.selected = selected;
+        }
+
+        @Override
+        public int getIconWidth() {
+            return 18;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 18;
+        }
+
+        @Override
+        public void paintIcon(Component c, Graphics g, int x, int y) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.translate(x, y);
+            if (selected) {
+                g2.setPaint(new GradientPaint(0, 0, SETTINGS_ACCENT_LIGHT,
+                        0, getIconHeight(), SETTINGS_ACCENT));
+                g2.fillRoundRect(0, 0, 18, 18, 6, 6);
+                g2.setColor(new Color(0x15, 0x12, 0x0B));
+                g2.setStroke(new BasicStroke(2.1f,
+                        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g2.drawLine(4, 9, 7, 12);
+                g2.drawLine(7, 12, 14, 5);
+            } else {
+                g2.setColor(new Color(0x1A, 0x1B, 0x1D));
+                g2.fillRoundRect(0, 0, 18, 18, 6, 6);
+                g2.setColor(new Color(0x3B, 0x3C, 0x3E));
+                g2.drawRoundRect(0, 0, 17, 17, 6, 6);
+            }
+            g2.dispose();
+        }
+    }
+
+    private static final class PremiumButtonUI extends BasicButtonUI {
+        @Override
+        public void paint(Graphics g, JComponent c) {
+            AbstractButton button = (AbstractButton) c;
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+            int w = c.getWidth();
+            int h = c.getHeight();
+            boolean primary = Boolean.TRUE.equals(button.getClientProperty("tawkitPrimary"));
+            boolean hover = button.getModel().isRollover();
+            boolean pressed = button.getModel().isPressed();
+            boolean enabled = button.isEnabled();
+
+            Color top;
+            Color bottom;
+            Color line;
+            Color text;
+            if (primary) {
+                top = pressed ? new Color(0xB9, 0x96, 0x52)
+                        : hover ? new Color(0xE7, 0xCB, 0x8C) : new Color(0xD7, 0xB6, 0x74);
+                bottom = pressed ? new Color(0x9C, 0x7B, 0x3E) : new Color(0xBA, 0x95, 0x52);
+                line = new Color(0xF0, 0xD7, 0x9F, 180);
+                text = new Color(0x17, 0x13, 0x0A);
+            } else {
+                top = pressed ? new Color(0x18, 0x19, 0x1B)
+                        : hover ? new Color(0x2A, 0x2B, 0x2D) : new Color(0x21, 0x22, 0x24);
+                bottom = pressed ? new Color(0x13, 0x14, 0x16) : new Color(0x18, 0x19, 0x1B);
+                line = hover ? new Color(0x4A, 0x43, 0x34) : new Color(0x36, 0x37, 0x39);
+                text = SETTINGS_TEXT;
+            }
+            if (!enabled) {
+                top = new Color(0x1A, 0x1B, 0x1D);
+                bottom = new Color(0x16, 0x17, 0x19);
+                line = new Color(0x2A, 0x2B, 0x2D);
+                text = SETTINGS_DIM;
+            }
+
+            g2.setPaint(new GradientPaint(0, 0, top, 0, h, bottom));
+            g2.fillRoundRect(0, 0, w - 1, h - 1, 11, 11);
+            g2.setColor(line);
+            g2.drawRoundRect(0, 0, w - 1, h - 1, 11, 11);
+            if (button.hasFocus()) {
+                g2.setColor(new Color(197, 166, 106, 110));
+                g2.drawRoundRect(2, 2, w - 5, h - 5, 9, 9);
+            }
+
+            String label = button.getText();
+            if (label != null && !label.isEmpty()) {
+                g2.setFont(button.getFont());
+                FontMetrics fm = g2.getFontMetrics();
+                int tx = Math.max(2, (w - fm.stringWidth(label)) / 2);
+                int ty = (h - fm.getHeight()) / 2 + fm.getAscent();
+                g2.setColor(text);
+                g2.drawString(label, tx, ty);
+            }
+            g2.dispose();
+        }
+    }
+
+    private static final class PremiumComboBoxUI extends BasicComboBoxUI {
+        @Override
+        public void paint(Graphics g, JComponent c) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(SETTINGS_FIELD);
+            g2.fillRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, 10, 10);
+            g2.setColor(c.hasFocus() ? SETTINGS_ACCENT : SETTINGS_LINE);
+            g2.drawRoundRect(0, 0, c.getWidth() - 1, c.getHeight() - 1, 10, 10);
+            g2.dispose();
+            super.paint(g, c);
+        }
+
+        @Override
+        public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
+            // The rounded surface is painted by paint().
+        }
+
+        @Override
+        protected JButton createArrowButton() {
+            JButton arrow = new JButton() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(getModel().isRollover() ? SETTINGS_ACCENT : SETTINGS_MUTED);
+                    g2.setStroke(new BasicStroke(1.6f,
+                            BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    int cx = getWidth() / 2;
+                    int cy = getHeight() / 2;
+                    g2.drawLine(cx - 4, cy - 2, cx, cy + 2);
+                    g2.drawLine(cx, cy + 2, cx + 4, cy - 2);
+                    g2.dispose();
+                }
+            };
+            arrow.setName("ComboBox.arrowButton");
+            arrow.putClientProperty("tawkitChrome", Boolean.TRUE);
+            arrow.setOpaque(false);
+            arrow.setContentAreaFilled(false);
+            arrow.setBorderPainted(false);
+            arrow.setFocusable(false);
+            arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            arrow.setPreferredSize(new Dimension(28, 0));
+            return arrow;
+        }
+    }
+
+    private static final class PremiumSpinnerUI extends javax.swing.plaf.basic.BasicSpinnerUI {
+        @Override
+        protected Component createNextButton() {
+            SpinnerArrowButton button = new SpinnerArrowButton(true);
+            button.setName("Spinner.nextButton");
+            return button;
+        }
+
+        @Override
+        protected Component createPreviousButton() {
+            SpinnerArrowButton button = new SpinnerArrowButton(false);
+            button.setName("Spinner.previousButton");
+            return button;
+        }
+    }
+
+    private static final class SpinnerArrowButton extends JButton {
+        private final boolean up;
+
+        SpinnerArrowButton(boolean up) {
+            this.up = up;
+            putClientProperty("tawkitChrome", Boolean.TRUE);
+            setOpaque(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setFocusable(false);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 4));
+            setPreferredSize(new Dimension(21, 0));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            if (getModel().isRollover()) {
+                g2.setColor(new Color(197, 166, 106, 30));
+                g2.fillRoundRect(2, 1, getWidth() - 4, getHeight() - 2, 6, 6);
+            }
+            g2.setColor(getModel().isRollover() ? SETTINGS_ACCENT : SETTINGS_MUTED);
+            g2.setStroke(new BasicStroke(1.5f,
+                    BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            int cx = getWidth() / 2;
+            int cy = getHeight() / 2;
+            if (up) {
+                g2.drawLine(cx - 3, cy + 1, cx, cy - 2);
+                g2.drawLine(cx, cy - 2, cx + 3, cy + 1);
+            } else {
+                g2.drawLine(cx - 3, cy - 2, cx, cy + 1);
+                g2.drawLine(cx, cy + 1, cx + 3, cy - 2);
+            }
+            g2.dispose();
+        }
+    }
+
+    private static final class PremiumSliderUI extends BasicSliderUI {
+        PremiumSliderUI(JSlider slider) {
+            super(slider);
+        }
+
+        @Override
+        protected Dimension getThumbSize() {
+            return new Dimension(16, 16);
+        }
+
+        @Override
+        public void paintTrack(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            int y = trackRect.y + trackRect.height / 2 - 2;
+            g2.setColor(new Color(0x30, 0x31, 0x33));
+            g2.fillRoundRect(trackRect.x, y, trackRect.width, 4, 4, 4);
+            int center = thumbRect.x + thumbRect.width / 2;
+            int filled = Math.max(0, Math.min(trackRect.width, center - trackRect.x));
+            if (filled > 0) {
+                g2.setPaint(new GradientPaint(
+                        trackRect.x, 0, SETTINGS_ACCENT,
+                        trackRect.x + trackRect.width, 0, SETTINGS_ACCENT_LIGHT));
+                g2.fillRoundRect(trackRect.x, y, filled, 4, 4, 4);
+            }
+            g2.dispose();
+        }
+
+        @Override
+        public void paintThumb(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            int x = thumbRect.x;
+            int y = thumbRect.y;
+            int w = thumbRect.width;
+            int h = thumbRect.height;
+            g2.setColor(new Color(0, 0, 0, 90));
+            g2.fillOval(x + 1, y + 2, w, h);
+            g2.setPaint(new GradientPaint(
+                    0, y, SETTINGS_ACCENT_LIGHT, 0, y + h, SETTINGS_ACCENT));
+            g2.fillOval(x, y, w, h);
+            g2.setColor(new Color(0x18, 0x15, 0x0E));
+            g2.drawOval(x, y, w - 1, h - 1);
+            g2.dispose();
+        }
+
+        @Override
+        public void paintFocus(Graphics g) {
+            // No dotted focus ring: the gold thumb is the focus cue.
+        }
+    }
+
+    private static final class PremiumScrollBarUI extends BasicScrollBarUI {
+        @Override
+        protected void configureScrollBarColors() {
+            thumbColor = new Color(0x3F, 0x3D, 0x36);
+            trackColor = new Color(0, 0, 0, 0);
+        }
+
+        @Override
+        protected JButton createDecreaseButton(int orientation) {
+            return zeroButton();
+        }
+
+        @Override
+        protected JButton createIncreaseButton(int orientation) {
+            return zeroButton();
+        }
+
+        private JButton zeroButton() {
+            JButton button = new JButton();
+            button.setPreferredSize(new Dimension(0, 0));
+            button.setMinimumSize(new Dimension(0, 0));
+            button.setMaximumSize(new Dimension(0, 0));
+            button.setOpaque(false);
+            button.setContentAreaFilled(false);
+            button.setBorderPainted(false);
+            return button;
+        }
+
+        @Override
+        protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+            // Transparent track keeps the card surface clean.
+        }
+
+        @Override
+        protected void paintThumb(Graphics g, JComponent c, Rectangle bounds) {
+            if (bounds.width <= 0 || bounds.height <= 0) return;
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(thumbColor);
+            g2.fillRoundRect(bounds.x + 2, bounds.y, Math.max(3, bounds.width - 4),
+                    bounds.height, 8, 8);
+            g2.dispose();
+        }
+    }
+
+    private static final class NavButton extends JButton {
+        private final Glyph glyph;
+        private boolean selectedLook;
+        private boolean hover;
+
+        NavButton(String text, Glyph glyph) {
+            super(text);
+            this.glyph = glyph;
+            setOpaque(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setHorizontalAlignment(SwingConstants.LEFT);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+            setForeground(SETTINGS_MUTED);
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+            setPreferredSize(new Dimension(188, 44));
+            addMouseListener(new MouseAdapter() {
+                @Override public void mouseEntered(MouseEvent e) {
+                    hover = true;
+                    repaint();
+                }
+
+                @Override public void mouseExited(MouseEvent e) {
+                    hover = false;
+                    repaint();
+                }
+            });
+        }
+
+        void setSelectedLook(boolean selected) {
+            this.selectedLook = selected;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            int w = getWidth();
+            int h = getHeight();
+
+            if (selectedLook || hover) {
+                Color top = selectedLook
+                        ? new Color(197, 166, 106, 48)
+                        : new Color(0x1E, 0x1F, 0x21, 190);
+                Color bottom = selectedLook
+                        ? new Color(197, 166, 106, 9)
+                        : new Color(0x16, 0x17, 0x19, 190);
+                g2.setPaint(new GradientPaint(0, 0, top, w, 0, bottom));
+                g2.fillRoundRect(1, 0, w - 2, h, 12, 12);
+                g2.setColor(selectedLook
+                        ? new Color(197, 166, 106, 85)
+                        : new Color(0x2C, 0x2D, 0x2F));
+                g2.drawRoundRect(1, 0, w - 3, h - 1, 12, 12);
+            }
+            if (selectedLook) {
+                g2.setColor(SETTINGS_ACCENT);
+                g2.fillRoundRect(1, 10, 3, h - 20, 3, 3);
+            }
+
+            glyph.paint(g2, 15, (h - 16) / 2f,
+                    selectedLook ? SETTINGS_ACCENT : new Color(0x9B, 0x98, 0x90));
+            g2.setFont(getFont().deriveFont(selectedLook ? Font.BOLD : Font.PLAIN));
+            g2.setColor(selectedLook ? SETTINGS_ACCENT_LIGHT : new Color(0xC6, 0xC2, 0xB8));
+            FontMetrics fm = g2.getFontMetrics();
+            int baseline = (h - fm.getHeight()) / 2 + fm.getAscent();
+            g2.drawString(getText(), 40, baseline);
+            if (hasFocus()) {
+                g2.setColor(new Color(197, 166, 106, 100));
+                g2.drawRoundRect(3, 3, w - 7, h - 7, 10, 10);
+            }
+            g2.dispose();
+        }
+    }
+
+    private enum Glyph {
+        LOCATION, PRAYER, IQAMA, AUDIO, DISPLAY, CONTENT, REMINDERS, BACKUP;
+
+        void paint(Graphics2D g2, float x, float y, Color color) {
+            Graphics2D g = (Graphics2D) g2.create();
+            g.translate(x, y);
+            g.setColor(color);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setStroke(new BasicStroke(1.5f,
+                    BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            switch (this) {
+                case LOCATION -> {
+                    Path2D pin = new Path2D.Float();
+                    pin.moveTo(3.2, 5.5);
+                    pin.curveTo(3.8, 9.2, 8, 13.7, 8, 13.7);
+                    pin.curveTo(8, 13.7, 12.2, 9.2, 12.8, 5.5);
+                    g.draw(pin);
+                    g.draw(new Ellipse2D.Float(5f, 2.2f, 6f, 6f));
+                    g.fill(new Ellipse2D.Float(7.2f, 4.6f, 1.6f, 1.6f));
+                }
+                case PRAYER -> {
+                    Area moon = new Area(new Ellipse2D.Float(3.0f, 1.5f, 10.5f, 12f));
+                    moon.subtract(new Area(new Ellipse2D.Float(6.6f, 0.2f, 9.2f, 11.5f)));
+                    g.draw(moon);
+                    g.fill(new Ellipse2D.Float(12.4f, 3.2f, 1.5f, 1.5f));
+                }
+                case IQAMA -> {
+                    g.draw(new Ellipse2D.Float(2.5f, 2.5f, 11f, 11f));
+                    g.draw(new Line2D.Float(8f, 5f, 8f, 8.6f));
+                    g.draw(new Line2D.Float(8f, 8.6f, 10.5f, 10f));
+                    g.draw(new Line2D.Float(6.5f, 1.2f, 9.5f, 1.2f));
+                }
+                case AUDIO -> {
+                    Path2D speaker = new Path2D.Float();
+                    speaker.moveTo(2.8, 6.2);
+                    speaker.lineTo(5.0, 6.2);
+                    speaker.lineTo(7.8, 3.5);
+                    speaker.lineTo(7.8, 12.5);
+                    speaker.lineTo(5.0, 9.8);
+                    speaker.lineTo(2.8, 9.8);
+                    speaker.closePath();
+                    g.draw(speaker);
+                    g.draw(new java.awt.geom.Arc2D.Float(
+                            6.5f, 4.8f, 6.5f, 6.4f, -50, 100, java.awt.geom.Arc2D.OPEN));
+                    g.draw(new java.awt.geom.Arc2D.Float(
+                            8.5f, 2.8f, 6.0f, 10.4f, -50, 100, java.awt.geom.Arc2D.OPEN));
+                }
+                case DISPLAY -> {
+                    g.draw(new RoundRectangle2D.Float(1.8f, 2.3f, 12.4f, 8.4f, 2.5f, 2.5f));
+                    g.draw(new Line2D.Float(8, 10.7f, 8, 13.2f));
+                    g.draw(new Line2D.Float(5.2f, 13.4f, 10.8f, 13.4f));
+                }
+                case CONTENT -> {
+                    g.draw(new RoundRectangle2D.Float(2, 2.2f, 12, 3.2f, 2, 2));
+                    g.draw(new RoundRectangle2D.Float(2, 6.4f, 12, 3.2f, 2, 2));
+                    g.draw(new RoundRectangle2D.Float(2, 10.6f, 12, 3.2f, 2, 2));
+                }
+                case REMINDERS -> {
+                    Path2D bell = new Path2D.Float();
+                    bell.moveTo(3.2, 11.8);
+                    bell.curveTo(4.4, 10.4, 4.4, 8.4, 4.4, 6.8);
+                    bell.curveTo(4.4, 4.4, 6.1, 2.3, 8, 2.3);
+                    bell.curveTo(9.9, 2.3, 11.6, 4.4, 11.6, 6.8);
+                    bell.curveTo(11.6, 8.4, 11.6, 10.4, 12.8, 11.8);
+                    bell.closePath();
+                    g.draw(bell);
+                    g.fill(new Ellipse2D.Float(7.1f, 13.2f, 1.8f, 1.8f));
+                }
+                case BACKUP -> {
+                    g.draw(new Line2D.Float(5, 2.2f, 5, 12.8f));
+                    g.draw(new Line2D.Float(11, 3.2f, 11, 13.8f));
+                    g.draw(new Line2D.Float(2.8f, 4.4f, 5, 2.2f));
+                    g.draw(new Line2D.Float(5, 2.2f, 7.2f, 4.4f));
+                    g.draw(new Line2D.Float(8.8f, 11.6f, 11, 13.8f));
+                    g.draw(new Line2D.Float(11, 13.8f, 13.2f, 11.6f));
+                }
+            }
+            g.dispose();
         }
     }
 
@@ -505,7 +1461,7 @@ public class SettingsDialog extends JDialog {
         GridBagConstraints gbc = grid();
 
         gbc.gridy = 0;
-        panel.add(new JLabel("Mosque / location name:"), gbc);
+        panel.add(new JLabel("Mosque / location:"), gbc);
         gbc.gridx = 1;
         panel.add(mosqueField, gbc);
 
@@ -545,7 +1501,7 @@ public class SettingsDialog extends JDialog {
         gbc.gridy = 7; gbc.gridx = 0; gbc.gridwidth = 2;
         locationStatus.setFont(locationStatus.getFont().deriveFont(
                 locationStatus.getFont().getSize2D() - 1f));
-        locationStatus.setForeground(new Color(0x6B, 0x6B, 0x6B));
+        locationStatus.setForeground(SETTINGS_MUTED);
         panel.add(locationStatus, gbc);
 
         gbc.gridy = 8; gbc.gridwidth = 2;
@@ -596,14 +1552,14 @@ public class SettingsDialog extends JDialog {
         // A detected/custom place is not in the database: keep its exact
         // coordinates instead of clearing them.
         applyNow();
-        locationStatus.setForeground(new Color(0x3B, 0x6E, 0x3B));
+        locationStatus.setForeground(new Color(0x7F, 0xB6, 0x88));
         locationStatus.setText("📍 " + city + ", " + country + " applied.");
     }
 
     /** Exact position of this computer, applied straight to the live settings. */
     private void detectMyLocation() {
         useMyLocationButton.setEnabled(false);
-        locationStatus.setForeground(new Color(0x6B, 0x6B, 0x6B));
+        locationStatus.setForeground(SETTINGS_MUTED);
         locationStatus.setText("Detecting your location…");
         locationService.locateAsync(new PreciseLocationService.Callback() {
             @Override
@@ -615,7 +1571,7 @@ public class SettingsDialog extends JDialog {
             @Override
             public void onFailure(String message, boolean permissionBlocked) {
                 useMyLocationButton.setEnabled(true);
-                locationStatus.setForeground(new Color(0xB0, 0x3A, 0x2E));
+                locationStatus.setForeground(new Color(0xE0, 0x85, 0x7A));
                 locationStatus.setText(permissionBlocked
                         ? "Windows is blocking location access for desktop apps."
                         : "Could not detect your location: " + message);
@@ -649,7 +1605,7 @@ public class SettingsDialog extends JDialog {
         detectedLocation = loc;
 
         locationStatus.setForeground(fix.permissionBlocked()
-                ? new Color(0xB0, 0x6A, 0x1E) : new Color(0x3B, 0x6E, 0x3B));
+                ? new Color(0xD9, 0xA4, 0x5C) : new Color(0x7F, 0xB6, 0x88));
         locationStatus.setText("📍 " + loc.getDisplayName() + " — "
                 + formatCoordinate(loc.getLatitude()) + ", "
                 + formatCoordinate(loc.getLongitude())
@@ -859,22 +1815,73 @@ public class SettingsDialog extends JDialog {
         panel.add(adhanCheck, gbc);
         gbc.gridwidth = 1;
 
+        // ---- bundled recordings, chosen by name ----
+        adhanCombo.setToolTipText(
+                "Choose the adhan played at prayer times (applies to every prayer)");
+        adhanCombo.addActionListener(e -> {
+            if (rebuildingAdhanChoices) return;
+            AdhanCatalog.Entry selected = (AdhanCatalog.Entry) adhanCombo.getSelectedItem();
+            if (selected != null) lastAdhanSelection = selected;
+            previewAudio.stop();
+            updateAdhanSelectionStatus();
+        });
+        refreshAdhanChoices();
+
         gbc.gridy = 1; gbc.gridx = 0;
+        panel.add(new JLabel("Adhan recitation:"), gbc);
+        gbc.gridx = 1;
+        JButton previewAdhan = styleButton(new JButton("▶ Preview"), false);
+        previewAdhan.setToolTipText("Listen to the selected recording");
+        previewAdhan.addActionListener(e -> previewSelectedAdhan());
+        JPanel recitationRow = new JPanel(new BorderLayout(6, 0));
+        recitationRow.setOpaque(false);
+        recitationRow.add(adhanCombo, BorderLayout.CENTER);
+        recitationRow.add(previewAdhan, BorderLayout.EAST);
+        panel.add(recitationRow, gbc);
+
+        adhanSearch.setToolTipText("Type a name to narrow the list");
+        adhanSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                refreshAdhanChoices();
+            }
+
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                refreshAdhanChoices();
+            }
+
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                refreshAdhanChoices();
+            }
+        });
+
+        gbc.gridy = 2; gbc.gridx = 0;
+        panel.add(new JLabel("Find adhan:"), gbc);
+        gbc.gridx = 1;
+        panel.add(adhanSearch, gbc);
+
+        gbc.gridy = 3; gbc.gridx = 0; gbc.gridwidth = 2;
+        JLabel recitationHint = new JLabel(
+                "<html><i>Applies to all prayers. A custom file below overrides it.</i></html>");
+        recitationHint.setForeground(SETTINGS_MUTED);
+        panel.add(recitationHint, gbc);
+        gbc.gridwidth = 1;
+
+        gbc.gridy = 4; gbc.gridx = 0;
         panel.add(new JLabel("Volume:"), gbc);
         gbc.gridx = 1;
         panel.add(volumeSlider, gbc);
 
-        gbc.gridy = 2; gbc.gridx = 0; gbc.gridwidth = 2;
+        gbc.gridy = 5; gbc.gridx = 0; gbc.gridwidth = 2;
         panel.add(preFajrAlertCheck, gbc);
         gbc.gridwidth = 1;
 
-        gbc.gridy = 3; gbc.gridx = 0;
-        panel.add(new JLabel("Minutes before Fajr:"), gbc);
+        gbc.gridy = 6; gbc.gridx = 0;
+        panel.add(new JLabel("Fajr alert (min):"), gbc);
         gbc.gridx = 1;
         panel.add(preFajrMinutes, gbc);
 
         // Live test so the slider is verifiable immediately
-        gbc.gridy = 4; gbc.gridx = 0;
+        gbc.gridy = 7; gbc.gridx = 0;
         panel.add(new JLabel(""), gbc);
         gbc.gridx = 1;
         JButton testSound = new JButton("🔊 Test sound");
@@ -896,19 +1903,46 @@ public class SettingsDialog extends JDialog {
         testRow.add(testSound);
         panel.add(testRow, gbc);
 
-        gbc.gridy = 5; gbc.gridx = 0; gbc.gridwidth = 2;
-        panel.add(new JLabel("<html><i>Adhan plays bundled WAV files from "
-                + "<b>assets/audio/</b> — or a chime when none exist.</i></html>"), gbc);
+        gbc.gridy = 8; gbc.gridx = 0; gbc.gridwidth = 2;
+        panel.add(new JLabel("Or use your own audio file for every prayer:"), gbc);
+
+        JButton chooseAllAdhan = styleButton(
+                new JButton("Choose file for all prayers"), false);
+        chooseAllAdhan.addActionListener(e -> chooseAdhanForAllPrayers());
+        JButton useBundledAdhan = styleButton(new JButton("Reset to default"), false);
+        useBundledAdhan.addActionListener(e -> resetAdhanFiles());
+        JPanel allPrayerRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        allPrayerRow.setOpaque(false);
+        allPrayerRow.add(chooseAllAdhan);
+        allPrayerRow.add(useBundledAdhan);
+        gbc.gridy = 9; gbc.gridx = 0; gbc.gridwidth = 2;
+        panel.add(allPrayerRow, gbc);
+
+        gbc.gridy = 10; gbc.gridx = 0; gbc.gridwidth = 2;
+        panel.add(adhanSelectionStatus, gbc);
 
         // ---- Per-prayer custom adhan files (#6) ----
-        gbc.gridy = 5; gbc.gridx = 0; gbc.gridwidth = 2;
-        panel.add(new JLabel("Custom adhan WAV per prayer (blank = bundled):"), gbc);
+        gbc.gridy = 11; gbc.gridx = 0; gbc.gridwidth = 2;
+        panel.add(new JLabel("Custom adhan file per prayer (blank = selected adhan):"), gbc);
         gbc.gridwidth = 1;
-        int fileRow = 6;
+        int fileRow = 12;
         for (PrayerType type : IQAMA_PRAYERS) {
             JTextField field = new JTextField(14);
             adhanFileFields.put(type, field);
-            JButton browse = new JButton("…");
+            field.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                @Override public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                    updateAdhanSelectionStatus();
+                }
+
+                @Override public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                    updateAdhanSelectionStatus();
+                }
+
+                @Override public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                    updateAdhanSelectionStatus();
+                }
+            });
+            JButton browse = new JButton("Choose...");
             browse.addActionListener(e -> chooseAdhanFile(field));
 
             gbc.gridy = fileRow; gbc.gridx = 0;
@@ -923,11 +1957,115 @@ public class SettingsDialog extends JDialog {
         return panel;
     }
 
+    /** Rebuilds the combo from the search text, keeping a sensible selection. */
+    private void refreshAdhanChoices() {
+        String filter = adhanSearch.getText().trim().toLowerCase(java.util.Locale.ROOT);
+        AdhanCatalog.Entry previous = (AdhanCatalog.Entry) adhanCombo.getSelectedItem();
+        if (previous == null) previous = lastAdhanSelection;
+
+        rebuildingAdhanChoices = true;
+        try {
+            adhanCombo.removeAllItems();
+            for (AdhanCatalog.Entry entry : AdhanCatalog.choices()) {
+                if (filter.isEmpty()
+                        || entry.displayName().toLowerCase(java.util.Locale.ROOT)
+                                .contains(filter)) {
+                    adhanCombo.addItem(entry);
+                }
+            }
+            if (adhanCombo.getItemCount() > 0) {
+                adhanCombo.setSelectedItem(previous);
+                if (!(adhanCombo.getSelectedItem() instanceof AdhanCatalog.Entry)) {
+                    adhanCombo.setSelectedIndex(0);
+                }
+                if (adhanCombo.getSelectedItem() instanceof AdhanCatalog.Entry current) {
+                    lastAdhanSelection = current;
+                }
+            }
+        } finally {
+            rebuildingAdhanChoices = false;
+        }
+        updateAdhanSelectionStatus();
+    }
+
+    private void previewSelectedAdhan() {
+        AdhanCatalog.Entry entry = (AdhanCatalog.Entry) adhanCombo.getSelectedItem();
+        if (entry == null) return;
+        previewAudio.stop();
+        previewAudio.setEnabled(true);
+        previewAudio.setVolume(volumeSlider.getValue() / 100.0);
+        previewAudio.setSelectedAdhan(entry.id());
+        // ADHAN with no prayer plays the chosen recording even for Fajr entries.
+        previewAudio.play(AudioService.Sound.ADHAN, null);
+    }
+
     private void chooseAdhanFile(JTextField target) {
+        String path = selectAdhanFile();
+        if (path != null) {
+            target.setText(path);
+            updateAdhanSelectionStatus();
+        }
+    }
+
+    private void chooseAdhanForAllPrayers() {
+        String path = selectAdhanFile();
+        if (path == null) return;
+        for (PrayerType type : IQAMA_PRAYERS) {
+            adhanFileFields.get(type).setText(path);
+        }
+        updateAdhanSelectionStatus();
+    }
+
+    private void resetAdhanFiles() {
+        for (JTextField field : adhanFileFields.values()) {
+            field.setText("");
+        }
+        adhanSearch.setText("");
+        if (adhanCombo.getItemCount() > 0) {
+            adhanCombo.setSelectedIndex(0);
+        }
+        lastAdhanSelection = AdhanCatalog.BUNDLED_DEFAULT;
+        previewAudio.stop();
+        updateAdhanSelectionStatus();
+    }
+
+    private String selectAdhanFile() {
         JFileChooser chooser = new JFileChooser();
-        chooser.setFileFilter(new FileNameExtensionFilter("WAV audio", "wav"));
+        chooser.setFileFilter(new FileNameExtensionFilter("Audio (WAV, MP3)", "wav", "mp3"));
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            target.setText(chooser.getSelectedFile().getAbsolutePath());
+            return chooser.getSelectedFile().getAbsolutePath();
+        }
+        return null;
+    }
+
+    private void updateAdhanSelectionStatus() {
+        String selectedPath = null;
+        boolean hasDifferentPaths = false;
+        for (JTextField field : adhanFileFields.values()) {
+            String path = field.getText().trim();
+            if (path.isEmpty()) continue;
+            if (selectedPath == null) {
+                selectedPath = path;
+            } else if (!selectedPath.equals(path)) {
+                hasDifferentPaths = true;
+                break;
+            }
+        }
+
+        if (hasDifferentPaths) {
+            adhanSelectionStatus.setText("Different custom file selected per prayer");
+        } else if (selectedPath != null) {
+            adhanSelectionStatus.setText("Custom file: " + new File(selectedPath).getName());
+        } else if (adhanCombo.getItemCount() == 0) {
+            String query = adhanSearch.getText().trim();
+            adhanSelectionStatus.setText(query.isEmpty()
+                    ? "No adhan available"
+                    : "No adhan matches \"" + query + "\"");
+        } else {
+            AdhanCatalog.Entry entry = (AdhanCatalog.Entry) adhanCombo.getSelectedItem();
+            adhanSelectionStatus.setText(entry == null || entry.id().isBlank()
+                    ? "Using bundled adhan (Hassan II Mosque)"
+                    : "Selected: " + entry.displayName());
         }
     }
 
@@ -942,8 +2080,7 @@ public class SettingsDialog extends JDialog {
         panel.add(languageCombo, gbc);
 
         gbc.gridy = 1; gbc.gridx = 0; gbc.gridwidth = 2;
-        panel.add(clock24Check, gbc);
-        panel.add(secondsCheck, gbc);
+        panel.add(checkRow(clock24Check, secondsCheck), gbc);
 
         gbc.gridy = 2; gbc.gridx = 0; gbc.gridwidth = 2;
         panel.add(dimCheck, gbc);
@@ -1073,21 +2210,29 @@ public class SettingsDialog extends JDialog {
         GridBagConstraints gbc = grid();
 
         gbc.gridy = 0; gbc.gridx = 0; gbc.gridwidth = 2;
-        panel.add(slidesCheck, gbc);
-        panel.add(weatherCheck, gbc);
+        panel.add(checkRow(slidesCheck, weatherCheck), gbc);
         gbc.gridwidth = 1;
 
         gbc.gridy = 1; gbc.gridx = 0;
         panel.add(new JLabel("Content rotation (seconds):"), gbc);
         gbc.gridx = 1;
+        rotationSpinner.setPreferredSize(new Dimension(110, 30));
+        rotationSpinner.setMaximumSize(new Dimension(110, 30));
+        gbc.fill = GridBagConstraints.NONE;
         panel.add(rotationSpinner, gbc);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.gridy = 2; gbc.gridx = 0; gbc.gridwidth = 2;
         panel.add(new JLabel("Announcements (one per line, shown in the ticker):"), gbc);
         gbc.gridwidth = 1;
         gbc.gridy = 3; gbc.gridx = 0; gbc.gridwidth = 2;
         announcementsArea.setLineWrap(true);
-        panel.add(new JScrollPane(announcementsArea), gbc);
+        JScrollPane announcementsScroll = new JScrollPane(announcementsArea);
+        announcementsScroll.setPreferredSize(new Dimension(480, 160));
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        panel.add(announcementsScroll, gbc);
         return panel;
     }
 
@@ -1135,12 +2280,12 @@ public class SettingsDialog extends JDialog {
         gbc.gridwidth = 1;
 
         gbc.gridy = 1; gbc.gridx = 0;
-        JButton exportBtn = new JButton("⬆ Export settings…");
+        JButton exportBtn = new JButton("Export settings…");
         exportBtn.addActionListener(e -> exportSettings());
         panel.add(exportBtn, gbc);
 
         gbc.gridy = 2; gbc.gridx = 0;
-        JButton importBtn = new JButton("⬇ Import settings…");
+        JButton importBtn = new JButton("Import settings…");
         importBtn.addActionListener(e -> importSettings());
         panel.add(importBtn, gbc);
 
@@ -1243,9 +2388,15 @@ public class SettingsDialog extends JDialog {
         volumeSlider.setValue((int) Math.round(settings.getAudioVolume() * 100));
         preFajrAlertCheck.setSelected(settings.isPreFajrAlertEnabled());
         preFajrMinutes.setValue(settings.getPreFajrAlertMinutes());
+        adhanSearch.setText("");
+        adhanCombo.setSelectedItem(AdhanCatalog.byId(settings.getAdhanSoundId()));
+        if (adhanCombo.getSelectedItem() instanceof AdhanCatalog.Entry loadedAdhan) {
+            lastAdhanSelection = loadedAdhan;
+        }
         for (PrayerType type : IQAMA_PRAYERS) {
             adhanFileFields.get(type).setText(settings.getAdhanSoundFile(type)); // #6
         }
+        updateAdhanSelectionStatus();
 
         jumuaCheck.setSelected(settings.isJumuaEnabled()); // #5
         jumuaKhutbaField.setText(settings.getJumuaKhutbaTime() != null
@@ -1332,6 +2483,9 @@ public class SettingsDialog extends JDialog {
         settings.setAudioVolume(volumeSlider.getValue() / 100.0);
         settings.setPreFajrAlertEnabled(preFajrAlertCheck.isSelected());
         settings.setPreFajrAlertMinutes((Integer) preFajrMinutes.getValue());
+        AdhanCatalog.Entry chosen = (AdhanCatalog.Entry) adhanCombo.getSelectedItem();
+        if (chosen == null) chosen = lastAdhanSelection;
+        settings.setAdhanSoundId(chosen == null ? "" : chosen.id());
         for (PrayerType type : IQAMA_PRAYERS) {
             settings.setAdhanSoundFile(type, adhanFileFields.get(type).getText().trim()); // #6
         }

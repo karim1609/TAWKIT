@@ -133,6 +133,7 @@ public class SettingsService {
         for (PrayerType type : s.getAdhanSoundFiles().keySet()) {
             p.setProperty("adhanSound." + type.name(), nz(s.getAdhanSoundFile(type)));
         }
+        p.setProperty("adhanSoundId", nz(s.getAdhanSoundId()));
         p.setProperty("jumuaEnabled", String.valueOf(s.isJumuaEnabled()));
         if (s.getJumuaKhutbaTime() != null) {
             p.setProperty("jumuaKhutbaTime", s.getJumuaKhutbaTime().toString());
@@ -204,6 +205,7 @@ public class SettingsService {
         for (PrayerType type : PrayerType.values()) {
             s.setAdhanSoundFile(type, p.getProperty("adhanSound." + type.name(), ""));
         }
+        s.setAdhanSoundId(p.getProperty("adhanSoundId", ""));
         s.setJumuaEnabled(Boolean.parseBoolean(p.getProperty("jumuaEnabled", "true")));
         try {
             String kt = p.getProperty("jumuaKhutbaTime", "");

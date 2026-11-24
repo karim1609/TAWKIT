@@ -15,6 +15,12 @@
     </properties>
 
     <dependencies>
+        <!-- MP3 decoding so the bundled adhan recordings stay small (JDK only reads WAV/AIFF/AU). -->
+        <dependency>
+            <groupId>javazoom</groupId>
+            <artifactId>jlayer</artifactId>
+            <version>1.0.1</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -51,6 +57,26 @@
                         </manifest>
                     </archive>
                 </configuration>
+            </plugin>
+            <!-- Keep the MP3 decoder beside the app jar instead of duplicating the
+                 (large) audio jar during the build. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.8.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-runtime-libs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <includeScope>runtime</includeScope>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
